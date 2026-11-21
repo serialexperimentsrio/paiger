@@ -1,4 +1,4 @@
-/* Ricebag demo: each screen is a TV anime eyecatch card. A single-hue
+/* Ricebowl demo: each screen is a TV anime eyecatch card. A single-hue
    airbrushed gradient, a thin ivory filigree frame, a Mincho wordmark,
    names in italic serif, and the live components as the subject. */
 
@@ -997,9 +997,9 @@ kbd {
 	opacity: 0.85;
 }
 
-/* ───────── Ricebag components, cel edition ─────────
-   Plain selectors on ricebag's public rb-* classes. Ricebag keeps its CSS in
-   @layer ricebag, so these win without !important or specificity tricks. */
+/* ───────── Ricebowl components, cel edition ─────────
+   Plain selectors on ricebowl's public rb-* classes. Ricebowl keeps its CSS in
+   @layer ricebowl, so these win without !important or specificity tricks. */
 
 .rb-button,
 .rb-select {
@@ -1525,7 +1525,7 @@ kbd {
 	margin: 4px 0;
 	padding: 12px 16px;
 	/* Static specimens: hovering would start their fade-out timers.
-	   !important only because ricebag sets pointer-events inline. */
+	   !important only because ricebowl sets pointer-events inline. */
 	pointer-events: none !important;
 }
 

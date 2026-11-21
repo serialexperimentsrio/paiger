@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, Button, Select, modalActive, toast } from 'ricebag'
+import { Box, Button, Select, modalActive, toast } from 'ricebowl'
 import pkg from '../../package.json'
 import { Frame, Glyph, Sigil } from './ornaments'
 import { CategoryScreens, GLYPHS, Plate, SCREENS, Screen, copy, sleep } from './sections'
 import { PRESETS, applyTheme, toCss, type PresetName, type Rgba, type Theme } from './themes'
 
-const GITHUB = 'https://github.com/serialexperimentsrio/ricebag'
-const NPM = 'https://www.npmjs.com/package/ricebag'
+const GITHUB = 'https://github.com/serialexperimentsrio/ricebowl'
+const NPM = 'https://www.npmjs.com/package/ricebowl'
 const PRESET_NAMES = Object.keys(PRESETS) as PresetName[]
 const ORDER = ['top', ...SCREENS.map((s) => s.id)]
 
@@ -68,11 +68,11 @@ export default function App() {
 			<div className="backdrop" data-screen={active} aria-hidden="true" />
 			<div className="grain-overlay" aria-hidden="true" />
 			<Frame />
-			<a className="lockup" href="#top" data-hidden={active === 'top' || undefined} aria-label="Ricebag, back to the title">
+			<a className="lockup" href="#top" data-hidden={active === 'top' || undefined} aria-label="Ricebowl, back to the title">
 				<span className="kanji" aria-hidden="true">
-					米袋
+					茶碗
 				</span>
-				<span className="latin">Ricebag</span>
+				<span className="latin">Ricebowl</span>
 			</a>
 			<main>
 				<Title />
@@ -129,16 +129,16 @@ function Title() {
 			<Sigil className="title-sigil" />
 			<h1 id="title-heading" className="wordmark">
 				<span className="kanji" aria-hidden="true">
-					米袋
+					茶碗
 				</span>
-				<span className="latin">Ricebag</span>
+				<span className="latin">Ricebowl</span>
 			</h1>
 			<p className="meta">
 				React component library <i aria-hidden="true">◆</i> v{pkg.version} <i aria-hidden="true">◆</i> {pkg.license}
 			</p>
 			<div className="cmd">
-				<code>npm install ricebag</code>
-				<button className="link-btn" onClick={() => copy('npm install ricebag')}>
+				<code>npm install ricebowl</code>
+				<button className="link-btn" onClick={() => copy('npm install ricebowl')}>
 					Copy
 				</button>
 			</div>
@@ -300,10 +300,10 @@ function Install() {
 				<Glyph text={GLYPHS.install} />
 				<ol className="steps">
 					<li>
-						<Plate label="Add the package" code="npm install ricebag" />
+						<Plate label="Add the package" code="npm install ricebowl" />
 					</li>
 					<li>
-						<Plate label="Import the stylesheet once" code={`import { Button } from 'ricebag'\nimport 'ricebag/styles.css'`} />
+						<Plate label="Import the stylesheet once" code={`import { Button } from 'ricebowl'\nimport 'ricebowl/styles.css'`} />
 					</li>
 				</ol>
 			</div>

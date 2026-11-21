@@ -51,7 +51,7 @@ const rgba = ({ hex, a }: Rgba) => {
 	return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${+a.toFixed(2)})`
 }
 
-/** The ricebag custom properties for a theme, in the order of tokens.css */
+/** The ricebowl custom properties for a theme, in the order of tokens.css */
 export const rbVars = (t: Theme): [string, string][] => [
 	['--rb-color-main', t.main],
 	['--rb-color-accent', t.accent],

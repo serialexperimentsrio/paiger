@@ -1,16 +1,14 @@
 > [!WARNING]
 > Despite the repository description (About), this library is still in active development. Components may exhibit bugs or unintended behavior and are not yet recommended for production use.
 
-<p align="center"><img src="https://raw.githubusercontent.com/serialexperimentsrio/ricebag/main/ricebag.png" alt="ricebag" /></p>
+# ricebowl
 
-# ricebag
-
-**ricebag** is a React component library with custom property theming.
+**ricebowl** is a React component library with custom property theming.
 
 ## Installation
 
 ```bash
-npm install ricebag
+npm install ricebowl
 ```
 
 ## Usage
@@ -18,8 +16,8 @@ npm install ricebag
 Import the components and the stylesheet:
 
 ```ts
-import { Button, Tooltip, setModal, toast } from 'ricebag'
-import 'ricebag/styles.css'
+import { Button, Tooltip, setModal, toast } from 'ricebowl'
+import 'ricebowl/styles.css'
 ```
 
 The stylesheet includes both component styles and default theme values. Import it once at the root of your app.
@@ -43,7 +41,7 @@ The stylesheet includes both component styles and default theme values. Import i
 
 ## Theming
 
-All visual properties are driven by CSS custom properties. The defaults shipped in `ricebag/styles.css` are:
+All visual properties are driven by CSS custom properties. The defaults shipped in `ricebowl/styles.css` are:
 
 ```css
 :root {
@@ -95,7 +93,7 @@ You can also scope overrides to a specific part of your app:
 
 Tokens cover colours and shape. For anything else, write ordinary CSS against the stable class names below.
 
-All of ricebag's CSS lives in a cascade layer called `ricebag`, so your own unlayered CSS always wins. You don't need `!important` or extra specificity, and load order doesn't matter:
+All of ricebowl's CSS lives in a cascade layer called `ricebowl`, so your own unlayered CSS always wins. You don't need `!important` or extra specificity, and load order doesn't matter:
 
 ```css
 .rb-button {
@@ -112,10 +110,10 @@ All of ricebag's CSS lives in a cascade layer called `ricebag`, so your own unla
 }
 ```
 
-If your own CSS is in layers too (Tailwind v4 is), declare ricebag's layer first so yours stay on top:
+If your own CSS is in layers too (Tailwind v4 is), declare ricebowl's layer first so yours stay on top:
 
 ```css
-@layer ricebag, theme, base, components, utilities;
+@layer ricebowl, theme, base, components, utilities;
 ```
 
 | Class | Element | State attributes |
@@ -136,13 +134,17 @@ If your own CSS is in layers too (Tailwind v4 is), declare ricebag's layer first
 
 `Box`, `Button`, `IconButton`, `Icon`, `Loading`, `Panel`, `Select` and `ModalBox` also accept a `className`, which is added alongside these.
 
+### Upgrading from 0.2.x
+
+0.3.0 renames the package from `ricebag` to `ricebowl`. Swap the dependency, then change `from 'ricebag'` to `from 'ricebowl'` and `ricebag/styles.css` to `ricebowl/styles.css`. The cascade layer is now `ricebowl` too, so update any `@layer ricebag, …` order declaration. The `--rb-*` variables and `rb-*` class names are unchanged.
+
 ### Upgrading from 0.1.x
 
-0.2.0 prefixes every variable with `rb-` so ricebag's names can't collide with your app's own. Rename `--color-*`, `--z-*` and `--transition-*` to `--rb-color-*`, `--rb-z-*` and `--rb-transition-*`. `--z-box-content` and `--transition-slow` were removed.
+0.2.0 prefixes every variable with `rb-` so ricebowl's names can't collide with your app's own. Rename `--color-*`, `--z-*` and `--transition-*` to `--rb-color-*`, `--rb-z-*` and `--rb-transition-*`. `--z-box-content` and `--transition-slow` were removed.
 
 ## Browser Requirements
 
-ricebag uses the [Web Animations API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API) and the [HTML Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API). No polyfills are included.
+ricebowl uses the [Web Animations API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API) and the [HTML Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API). No polyfills are included.
 
 Minimum supported browsers: Chrome 114+, Safari 17+, Firefox 125+.
 

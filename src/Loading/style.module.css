@@ -1,5 +1,5 @@
 /* Inside a cascade layer, so any unlayered app CSS wins regardless of specificity or load order */
-@layer ricebag {
+@layer ricebowl {
 	.loadingAnimation {
 		position: absolute;
 		left: 50%;

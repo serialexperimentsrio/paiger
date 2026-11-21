@@ -1,6 +1,6 @@
 /* Doubled class outranks Box's own .box rule without !important */
 /* Inside a cascade layer, so any unlayered app CSS wins regardless of specificity or load order */
-@layer ricebag {
+@layer ricebowl {
 	.outerModal.outerModal {
 		position: fixed;
 		left: 50%;

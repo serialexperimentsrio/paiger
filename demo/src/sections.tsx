@@ -19,7 +19,7 @@ import {
 	setToastVisibility,
 	toast,
 	type ToastType
-} from 'ricebag'
+} from 'ricebowl'
 import { Glyph } from './ornaments'
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -923,7 +923,7 @@ export const CATEGORIES: Category[] = [
 				['setToastVisibility', '(visible) => void'],
 				['<ToastBox>', 'the toast itself']
 			],
-			code: `import { toast } from 'ricebag'
+			code: `import { toast } from 'ricebowl'
 
 toast('Rice is ready.', 'success')
 setToastLocation('left', 'top')`,

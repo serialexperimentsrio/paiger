@@ -1,4 +1,4 @@
-// Default theme values, bundled into ricebag/styles.css
+// Default theme values, bundled into ricebowl/styles.css
 import './tokens.css'
 
 export { Box } from './Box'

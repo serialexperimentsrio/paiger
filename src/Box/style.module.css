@@ -1,5 +1,5 @@
 /* Inside a cascade layer, so any unlayered app CSS wins regardless of specificity or load order */
-@layer ricebag {
+@layer ricebowl {
 	.box {
 		background: var(--rb-color-main);
 		border: var(--rb-border-width) solid var(--rb-color-accent);

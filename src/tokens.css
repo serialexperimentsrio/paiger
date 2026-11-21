@@ -1,8 +1,8 @@
-/* Default theme, bundled into ricebag/styles.css. :where() gives these zero
+/* Default theme, bundled into ricebowl/styles.css. :where() gives these zero
    specificity, so an app's own :root values always win, even though the JS
    bundle also injects this CSS at the end of <head> at runtime. */
 /* Inside a cascade layer, so any unlayered app CSS wins regardless of specificity or load order */
-@layer ricebag {
+@layer ricebowl {
 	:where(:root) {
 		/* Colors */
 		--rb-color-main: #141414; /* component backgrounds */
