@@ -7,7 +7,7 @@ type MouseEventHandler = (event: React.MouseEvent) => void
 type ChildProps = {
 	onMouseEnter?: MouseEventHandler
 	onMouseLeave?: MouseEventHandler
-	[key: string]: unknown // use unknown instead of any
+	[key: string]: unknown
 }
 
 type TooltipProps = {
@@ -29,7 +29,6 @@ export function Tooltip({
 	forceShow,
 	forceHide
 }: TooltipProps) {
-	// validate that only one direction prop is set
 	useEffect(() => {
 		const directionProps = [above, left, right].filter(Boolean)
 		if (directionProps.length > 1) {
@@ -51,11 +50,15 @@ export function Tooltip({
 	const innerRef = useRef<HTMLDivElement>(null)
 	const lastForceHideRef = useRef(forceHide)
 	const scrollingRef = useRef(false)
+	// The scroll handler is only set up once, so it reads this instead
+	const forceShowRef = useRef(forceShow)
+	forceShowRef.current = forceShow
+	// Bumped after scrolling stops, so a pinned tooltip comes back
+	const [settled, setSettled] = useState(0)
 
-	// Scrolling moves the trigger away from where the tooltip was placed, so hide
-	// it, then show it again once scrolling settles if the pointer is still over
-	// the trigger. Capture phase also catches scrolls inside overflow containers,
-	// which never reach a plain window listener.
+	// Hide while the page scrolls (the trigger moves away from the tooltip), and
+	// bring it back once scrolling stops if the mouse is still on the trigger.
+	// Capture so scrolling containers count too.
 	useEffect(() => {
 		let settleTimer: ReturnType<typeof setTimeout>
 		const onScroll = () => {
@@ -67,6 +70,7 @@ export function Tooltip({
 			settleTimer = setTimeout(() => {
 				scrollingRef.current = false
 				if (childRef.current?.matches(':hover')) setHovered(true)
+				if (forceShowRef.current) setSettled((n) => n + 1)
 			}, 150)
 		}
 		window.addEventListener('scroll', onScroll, { capture: true, passive: true })
@@ -197,23 +201,13 @@ export function Tooltip({
 		if (!shouldShow) keyframes.reverse()
 
 		animationRef.current?.cancel()
-		const animation = boxRef.current.animate(
-			keyframes,
-			shouldShow
-				? {
-						duration: 200,
-						easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-						fill: 'forwards'
-					}
-				: {
-						duration: 400,
-						easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-						fill: 'forwards'
-					}
-		)
+		const animation = boxRef.current.animate(keyframes, {
+			duration: shouldShow ? 200 : 400,
+			easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+			fill: 'forwards'
+		})
 		animationRef.current = animation
 
-		// handle hide animation complete
 		if (!shouldShow) {
 			animation.onfinish = () => setVisible(false)
 		}
@@ -221,12 +215,13 @@ export function Tooltip({
 		return () => {
 			animation.cancel()
 		}
-	}, [hovered, forceShow, forceHide, above, left, right])
+	}, [hovered, forceShow, forceHide, above, left, right, settled])
 
-	// show tooltip content
 	const isHorizontal = left || right
+	// Render it whenever forceShow is on, since the effect needs the box to
+	// measure and animate
 	const tooltipContent =
-		(hovered || visible) &&
+		(hovered || visible || (forceShow && !forceHide)) &&
 		createPortal(
 			<div ref={boxRef} id={tooltipId} role="tooltip" className={`rb-tooltip ${style.tooltip}`}>
 				<div ref={innerRef} className={`rb-tooltip-text ${style.tooltipInner} ${isHorizontal ? style.horizontal : style.vertical}`}>
@@ -236,60 +231,30 @@ export function Tooltip({
 			document.body
 		)
 
-	// safely clone child element with added props
 	const clone = React.cloneElement(children, {
-		...children.props,
-		// only reference the tooltip while it exists
+		// Only point at the tooltip while it exists
 		'aria-describedby':
 			[children.props['aria-describedby'], (hovered || visible || forceShow) && tooltipId]
 				.filter(Boolean)
 				.join(' ') || undefined,
 
-		// merge refs
+		// Keep the child's own ref working (React 19 has it in props.ref)
 		ref: (node: HTMLElement | null) => {
-			// update our ref
 			childRef.current = node
-
-			type RefType =
-				| ((instance: HTMLElement | null) => void)
-				| { current: HTMLElement | null }
-				| null
-			// React 19 keeps the child's own ref in props.ref (element.ref is gone)
-			const originalRef = (children.props as { ref?: RefType }).ref
-			if (!originalRef) return
-
-			// handle both function and object refs
-			if (typeof originalRef === 'function') {
-				// function ref
-				;(originalRef as (instance: HTMLElement | null) => void)(node)
-			} else if (
-				originalRef &&
-				typeof originalRef === 'object' &&
-				'current' in originalRef
-			) {
-				// ref object, forward the ref
-				// eslint-disable-next-line react-hooks/immutability
-				;(originalRef as { current: HTMLElement | null }).current = node
-			}
+			const own = (children.props as { ref?: React.Ref<HTMLElement> }).ref
+			if (typeof own === 'function') own(node)
+			else if (own) own.current = node
 		},
 
-		// add mouse handlers
 		onMouseEnter: (e: React.MouseEvent) => {
-			// while scrolling, the settle timer shows the tooltip instead
+			// Mid-scroll, the timer above handles this
 			if (!scrollingRef.current) setHovered(true)
-
-			// call original
-			if (children.props.onMouseEnter) {
-				children.props.onMouseEnter(e)
-			}
+			children.props.onMouseEnter?.(e)
 		},
 
 		onMouseLeave: (e: React.MouseEvent) => {
 			setHovered(false)
-
-			if (children.props.onMouseLeave) {
-				children.props.onMouseLeave(e)
-			}
+			children.props.onMouseLeave?.(e)
 		}
 	})
 

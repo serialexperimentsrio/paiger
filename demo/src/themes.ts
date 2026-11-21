@@ -11,13 +11,12 @@ export type Theme = {
 	backdrop: Rgba
 	border: number
 	radius: number
-	shadow: string
 }
 
 export type PresetName = 'Light' | 'Dark'
 
 export const PRESETS: Record<PresetName, Theme> = {
-	// Parchment and ink, with a hard offset shadow like a cel shadow
+	// Parchment and ink
 	Light: {
 		main: '#f4ecdc',
 		accent: '#2b1f17',
@@ -27,9 +26,8 @@ export const PRESETS: Record<PresetName, Theme> = {
 		warning: { hex: '#d9a21b', a: 0.35 },
 		success: { hex: '#3f8f5a', a: 0.3 },
 		backdrop: { hex: '#120c08', a: 0.55 },
-		border: 2,
-		radius: 0,
-		shadow: '4px 4px 0 rgba(20, 12, 8, 0.55)'
+		border: 1,
+		radius: 0
 	},
 	Dark: {
 		main: '#1c1714',
@@ -40,9 +38,8 @@ export const PRESETS: Record<PresetName, Theme> = {
 		warning: { hex: '#f2c14e', a: 0.28 },
 		success: { hex: '#6fcf8f', a: 0.25 },
 		backdrop: { hex: '#000000', a: 0.6 },
-		border: 2,
-		radius: 0,
-		shadow: '4px 4px 0 rgba(0, 0, 0, 0.6)'
+		border: 1,
+		radius: 0
 	}
 }
 
@@ -52,7 +49,7 @@ const rgba = ({ hex, a }: Rgba) => {
 }
 
 /** The ricebowl custom properties for a theme, in the order of tokens.css */
-export const rbVars = (t: Theme): [string, string][] => [
+const rbVars = (t: Theme): [string, string][] => [
 	['--rb-color-main', t.main],
 	['--rb-color-accent', t.accent],
 	['--rb-color-bright', t.bright],
@@ -62,8 +59,7 @@ export const rbVars = (t: Theme): [string, string][] => [
 	['--rb-color-success', rgba(t.success)],
 	['--rb-color-backdrop', rgba(t.backdrop)],
 	['--rb-border-width', `${t.border}px`],
-	['--rb-radius', `${t.radius}px`],
-	['--rb-shadow', t.shadow]
+	['--rb-radius', `${t.radius}px`]
 ]
 
 export const toCss = (t: Theme) =>
@@ -71,8 +67,8 @@ export const toCss = (t: Theme) =>
 		.map(([k, v]) => `  ${k}: ${v};`)
 		.join('\n')}\n}`
 
-// Light surfaces have dark text; the demo's white line icons need inverting there
-export const isLight = (t: Theme) => {
+// The icons are white, so flip them on light backgrounds
+const isLight = (t: Theme) => {
 	const n = parseInt(t.main.slice(1), 16)
 	const lum = 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)
 	return lum > 140
@@ -82,6 +78,6 @@ export const applyTheme = (t: Theme) => {
 	const root = document.documentElement.style
 	for (const [k, v] of rbVars(t)) root.setProperty(k, v)
 	root.setProperty('--icon-filter', isLight(t) ? 'invert(1)' : 'none')
-	// Hovered buttons swap to the accent colour, so their icons flip too
+	// Hovered buttons use the accent as fill, so their icons flip the other way
 	root.setProperty('--icon-filter-hover', isLight(t) ? 'none' : 'invert(1)')
 }

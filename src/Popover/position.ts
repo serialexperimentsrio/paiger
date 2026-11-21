@@ -14,7 +14,7 @@ export const POPOVER_CONFIG = {
 	}
 }
 
-// Base transforms per position — these are the resting state after animation.
+// Where each side ends up once the animation is done
 export const TRANSFORMS = {
 	above: 'translateY(-100%)',
 	below: 'none',
@@ -22,8 +22,7 @@ export const TRANSFORMS = {
 	right: 'translateY(-50%)'
 } as const
 
-// Walk up the DOM to check if the trigger lives inside a fixed container.
-// Needed so we know whether to use fixed or absolute positioning for the popover.
+// A trigger inside something fixed needs a fixed popover too
 export const isInsideFixedContainer = (element: Element): boolean => {
 	let current = element.parentElement
 	while (current && current !== document.body) {
@@ -57,7 +56,7 @@ export const createPositionStyle = (
 	const triggerWidth = rect.width > 0 ? `${Math.round(rect.width)}px` : 'auto'
 	const minHeight = rect.height > 0 ? `${rect.height}px` : 'auto'
 
-	// Fixed positioning gives us viewport coords directly; absolute needs scroll offset added.
+	// Absolute positions need the scroll offset, fixed ones don't
 	const x = useFixed ? rect.left : rect.left + scrollLeft
 	const y = useFixed ? rect.top : rect.top + scrollTop
 
@@ -148,7 +147,6 @@ export const determinePosition = (
 	triggerRect: DOMRect,
 	size: { width: number; height: number } | null,
 	scrollTop: number,
-	_scrollLeft: number,
 	useFixed: boolean,
 	above?: boolean,
 	below?: boolean,
@@ -156,7 +154,7 @@ export const determinePosition = (
 	right?: boolean,
 	smartPositions?: PopoverPosition[]
 ): PopoverPosition => {
-	// Explicit direction props always win over smart positioning.
+	// An explicit side always wins
 	if (right) return 'right'
 	if (left) return 'left'
 	if (below) return 'below'
@@ -166,8 +164,7 @@ export const determinePosition = (
 
 	const { viewportPadding: padding, triggerSpacing: spacing } = POPOVER_CONFIG
 
-	// Score each candidate position: prefer ones that fit completely,
-	// then rank by direction preference (below > above > right > left).
+	// Prefer a side where it fits completely, then below, above, right, left
 	const testPositions: PopoverPosition[] = smartPositions || ['below', 'above', 'right', 'left']
 	const positionScores: Array<{ position: PopoverPosition; score: number; fits: boolean }> = []
 

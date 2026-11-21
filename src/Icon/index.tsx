@@ -13,7 +13,6 @@ export const Icon = forwardRef(
 		ref: ForwardedRef<HTMLImageElement>
 	) => {
 		return (
-			// eslint-disable-next-line @next/next/no-img-element
 			<img
 				{...rest}
 				draggable={false}

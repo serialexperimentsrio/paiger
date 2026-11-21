@@ -4,10 +4,10 @@ import styles from './style.module.css'
 
 export type ToastType = 'default' | 'error' | 'success' | 'warning' | 'info'
 
-// How long a toast stays fully visible, then how long it takes to fade out
+// How long a toast stays up, and how long it takes to fade
 export const DISPLAY_MS = 2500
 const FADE_MS = 350
-// Hovering again after the fade has started gives the toast this long before fading again
+// After the mouse leaves, wait this long before fading again
 const RESUME_MS = 1500
 
 export interface ToastBoxProps {
@@ -31,7 +31,7 @@ export default function ToastBox(props: ToastBoxProps) {
 	const startClosing = () => {
 		setIsClosing(true)
 
-		// Remove once the fade has finished, plus a short buffer
+		// Remove it once the fade is done, with a little slack
 		if (props.onRemove) {
 			const onRemove = props.onRemove
 			removeTimeoutRef.current = setTimeout(() => {
@@ -41,7 +41,7 @@ export default function ToastBox(props: ToastBoxProps) {
 		}
 	}
 
-	// Runs once: re-running on every parent render would restart the timer
+	// Mount only, or every re-render would restart the timer
 	useEffect(() => {
 		const remaining = props.closeAt.getTime() - Date.now()
 		closeTimeoutRef.current = setTimeout(startClosing, Math.max(0, remaining))
@@ -69,7 +69,7 @@ export default function ToastBox(props: ToastBoxProps) {
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
 			className={`rb-toast ${styles.toast} ${isClosing ? styles.closing : ''}`}
-			// Type colours and the fade live in CSS, keyed by these attributes
+			// The CSS picks colours and the fade off these
 			data-type={props.type ?? 'default'}
 			data-closing={isClosing || undefined}
 			style={

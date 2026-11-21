@@ -16,7 +16,7 @@ export const Loading = forwardRef(
 		return (
 			<span
 				ref={ref}
-				className={`rb-loading loadingAnimation ${styles.loadingAnimation} ${
+				className={`rb-loading ${styles.loadingAnimation} ${
 					inline ? styles.inline : ''
 				} ${className || ''}`}
 				style={style}

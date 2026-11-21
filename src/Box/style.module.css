@@ -1,4 +1,3 @@
-/* Inside a cascade layer, so any unlayered app CSS wins regardless of specificity or load order */
 @layer ricebowl {
 	.box {
 		background: var(--rb-color-main);
@@ -12,7 +11,7 @@
 		transition: background var(--rb-transition-base);
 	}
 
-	/* :where() keeps this at zero specificity, so children can set their own position */
+	/* Zero specificity, so children can still set their own position */
 	:where(.box) > * {
 		position: relative;
 		/* Keep content above the background image and icon */

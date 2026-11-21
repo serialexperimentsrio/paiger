@@ -3,7 +3,7 @@ export const setupObservers = (
 	popoverContentElement: HTMLElement | null,
 	updatePosition: () => void
 ) => {
-	// Debounce position updates so rapid resize/scroll events don't thrash layout.
+	// Bunch up resize and scroll events into one update
 	let updateTimeout: number | undefined
 	const debouncedUpdate = () => {
 		if (updateTimeout) clearTimeout(updateTimeout)
@@ -13,8 +13,7 @@ export const setupObservers = (
 	const targetResizeObserver = new ResizeObserver(debouncedUpdate)
 	const popoverResizeObserver = new ResizeObserver(debouncedUpdate)
 
-	// Watch the trigger and up to 5 ancestor elements — layout changes higher
-	// up the tree can shift the trigger without the trigger itself resizing.
+	// Watch a few ancestors too: they can move the trigger without resizing it
 	targetResizeObserver.observe(triggerElement)
 	let currentElement = triggerElement.parentElement
 	let depth = 0
@@ -28,20 +27,12 @@ export const setupObservers = (
 		popoverResizeObserver.observe(popoverContentElement)
 	}
 
-	// Also track scroll on every scrollable ancestor so the popover follows
-	// when the trigger scrolls within a container.
+	// Follow the trigger when it scrolls inside a container
 	const scrollableParents: Element[] = []
 	let scrollParent = triggerElement.parentElement
 	while (scrollParent && scrollParent !== document.documentElement) {
-		const computedStyle = window.getComputedStyle(scrollParent)
-		if (
-			computedStyle.overflow === 'auto' ||
-			computedStyle.overflow === 'scroll' ||
-			computedStyle.overflowX === 'auto' ||
-			computedStyle.overflowX === 'scroll' ||
-			computedStyle.overflowY === 'auto' ||
-			computedStyle.overflowY === 'scroll'
-		) {
+		const { overflow, overflowX, overflowY } = window.getComputedStyle(scrollParent)
+		if (/auto|scroll/.test(`${overflow} ${overflowX} ${overflowY}`)) {
 			scrollableParents.push(scrollParent)
 			scrollParent.addEventListener('scroll', debouncedUpdate, { passive: true })
 		}
@@ -50,8 +41,7 @@ export const setupObservers = (
 
 	document.addEventListener('scroll', debouncedUpdate, { passive: true })
 
-	// Mutation observer catches class/style/transform changes on the trigger's
-	// immediate container that would affect its position without a resize.
+	// Class and style changes nearby can move the trigger as well
 	const mutationObserver = new MutationObserver(() => {
 		requestAnimationFrame(debouncedUpdate)
 	})

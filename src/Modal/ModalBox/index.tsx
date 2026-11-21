@@ -25,7 +25,7 @@ export const ModalBox = ({
 	const divRef = useRef<HTMLDivElement>(null)
 	const opened = useRef(false)
 
-	// Auto-focus the first input when the modal mounts, e.g. for forms.
+	// Forms: start in the first input
 	useEffect(() => {
 		divRef.current?.querySelector('input')?.focus({ preventScroll: true })
 	}, [])
@@ -42,7 +42,7 @@ export const ModalBox = ({
 			})
 		}
 
-		const getInitialFilter = () => ANIMATION_CONFIG.modalTransition.initialFilter
+		const { initialFilter } = ANIMATION_CONFIG.modalTransition
 
 		const finalStyles = () => {
 			const rect = divRef.current?.getBoundingClientRect()
@@ -50,31 +50,25 @@ export const ModalBox = ({
 		}
 
 		const openModal = () => {
-			// If a nested transition is in progress, cancel any animation
-			// that's already running so the new one starts cleanly.
+			// Swapping from another modal: drop whatever was still animating
 			if (isModalTransitioning() && divRef.current?.parentElement) {
 				divRef.current.parentElement.getAnimations().forEach((anim) => anim.cancel())
 			}
 			const fin = finalStyles()
-			const width = parseFloat(fin.width)
-			animateOuterModal(
-				{ width: `${width}px`, height: 0, boxShadow: '0 0 0 0 transparent', filter: getInitialFilter() },
-				fin
-			)
+			animateOuterModal({ width: fin.width, height: 0, boxShadow: '0 0 0 0 transparent', filter: initialFilter }, fin)
 		}
 
 		const closeModal = (isNested = false) => {
 			if (!divRef.current?.parentElement) return
 			const outerModal = divRef.current.parentElement
 			outerModal.getAnimations().forEach((anim) => anim.cancel())
-			// Nested transitions use a shorter duration so the swap feels snappy.
+			// Swaps close faster than a normal close
 			const duration = isNested
 				? ANIMATION_CONFIG.nestedTransition.duration
 				: ANIMATION_CONFIG.modalTransition.duration
 			const fin = finalStyles()
-			const width = parseFloat(fin.width)
 			const anim = outerModal.animate(
-				[fin, { width: `${width}px`, height: 0, filter: getInitialFilter() }],
+				[fin, { width: fin.width, height: 0, filter: initialFilter }],
 				{ duration, easing: ANIMATION_CONFIG.modalTransition.easing, fill: 'forwards' }
 			)
 			anim.onfinish = () => {
@@ -84,9 +78,8 @@ export const ModalBox = ({
 
 		registerCloseAnimation((isNested?: boolean) => closeModal(isNested))
 
-		// Double rAF: first frame waits for React's DOM commit,
-		// second frame waits for the browser's layout pass so
-		// getBoundingClientRect() returns real dimensions.
+		// Two frames: one for React to commit, one for layout, so the size we
+		// measure is real
 		requestAnimationFrame(() => {
 			requestAnimationFrame(() => {
 				openModal()
@@ -97,7 +90,7 @@ export const ModalBox = ({
 		let resizeRafId: number | undefined
 		const resizeObserver = new ResizeObserver(() => {
 			if (!opened.current) return
-			// Debounce via rAF so rapid content changes don't queue multiple animations.
+			// At most one resize animation per frame
 			if (resizeRafId !== undefined) cancelAnimationFrame(resizeRafId)
 			resizeRafId = requestAnimationFrame(() => {
 				resizeRafId = undefined
@@ -118,7 +111,7 @@ export const ModalBox = ({
 		<Box
 			image={image}
 			icon={icon}
-			className={`rb-modal outerModal ${style.outerModal}`}
+			className={`rb-modal ${style.outerModal}`}
 		>
 			<div
 				ref={divRef}

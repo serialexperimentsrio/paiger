@@ -29,11 +29,11 @@ export const Box = forwardRef(
 				ref={ref}
 				className={`rb-box ${style.box} ${className || ''}`}
 			>
-				{/* Positioned by CSS only, so apps can restyle them */}
+				{/* Placed purely with CSS, so apps can move them around */}
 				{image && (
 					<Img
 						src={image}
-						className={`rb-box-image boxbg ${style.bg}`}
+						className={`rb-box-image ${style.bg}`}
 						alt=""
 						aria-hidden="true"
 						fill={imageComponent != null ? true : undefined}
@@ -42,7 +42,7 @@ export const Box = forwardRef(
 				{icon && (
 					<Img
 						src={icon}
-						className={`rb-box-icon boxiconbg ${style.iconbg}`}
+						className={`rb-box-icon ${style.iconbg}`}
 						alt=""
 						aria-hidden="true"
 						fill={imageComponent != null ? true : undefined}

@@ -1,6 +1,6 @@
 /* Ricebowl demo: each screen is a TV anime eyecatch card. A single-hue
    airbrushed gradient, a thin ivory filigree frame, a Mincho wordmark,
-   names in italic serif, and the live components as the subject. */
+   names in serif, and the live components as the subject. */
 
 :root {
 	--serif: 'Cormorant Garamond', 'Times New Roman', serif;
@@ -28,6 +28,16 @@
 *::before,
 *::after {
 	box-sizing: border-box;
+}
+
+/* Upright throughout, including elements browsers italicise by default */
+i,
+em,
+cite,
+var,
+dfn,
+address {
+	font-style: normal;
 }
 
 html {
@@ -428,26 +438,19 @@ kbd {
 
 /* ───────── Title ───────── */
 
+/* Title: the lockup centred on the card */
 .title {
 	display: grid;
 	place-content: center;
+}
+
+.title-copy {
+	position: relative;
+	z-index: 1;
+	display: grid;
 	justify-items: center;
 	gap: 22px;
 	text-align: center;
-}
-
-.title > * {
-	position: relative;
-}
-
-.title .title-sigil {
-	position: absolute;
-	left: 50%;
-	top: 50%;
-	width: min(84vh, 86vw);
-	color: rgb(251 244 230 / 0.13);
-	translate: -50% -50%;
-	animation: spin 240s linear infinite;
 }
 
 .wordmark {
@@ -508,7 +511,6 @@ kbd {
 	display: inline-flex;
 	align-items: center;
 	font-size: 22px;
-	font-style: italic;
 	font-weight: 600;
 	text-decoration: none;
 	text-shadow: 0 1px 2px var(--shade);
@@ -541,37 +543,100 @@ kbd {
 
 /* ───────── Component cards ───────── */
 
+/* The empty first and last rows share the spare height, which centres the
+   name and reference vertically in their column */
 .card {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
-	grid-template-rows: auto minmax(0, 1fr) auto;
+	grid-template-rows: minmax(0, 1fr) auto auto auto minmax(0, 1fr);
 	grid-template-areas:
+		'stage .'
 		'stage head'
 		'stage body'
-		'usage body';
-	gap: 18px 64px;
+		'usage body'
+		'usage .';
+	gap: 0 64px;
+	/* Very wide screens: keep the composition together instead of letting the
+	   two columns drift to opposite edges */
+	padding-inline: max(80px, calc((100vw - 1480px) / 2));
+}
+
+.card .usage {
+	align-self: end;
+	margin-top: 18px;
 }
 
 .card.flip {
+	padding-top: 128px;
 	grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
 	grid-template-areas:
+		'. stage'
 		'head stage'
 		'body stage'
-		'body usage';
+		'body usage'
+		'. usage';
+}
+
+/* Usage hugs its code instead of stretching under the whole stage */
+.usage .plate {
+	width: fit-content;
+	min-width: min(100%, 440px);
+	max-width: 100%;
+}
+
+.flip .usage {
+	justify-self: end;
+}
+
+/* Tall screens: the subject gets the whole height of its side, and the name,
+   reference and usage stack down the other side */
+@media (min-width: 1000px) and (min-height: 880px) {
+	.card:not(.theming) {
+		grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
+		grid-template-areas:
+			'stage .'
+			'stage head'
+			'stage body'
+			'stage usage'
+			'stage .';
+	}
+
+	.card.flip:not(.theming) {
+		grid-template-columns: minmax(360px, 460px) minmax(0, 1fr);
+		grid-template-areas:
+			'. stage'
+			'head stage'
+			'body stage'
+			'usage stage'
+			'. stage';
+	}
+
+	/* Usage follows the props directly, and the whole column is centred */
+	.card:not(.theming) .usage {
+		justify-self: stretch;
+		align-self: start;
+		margin-top: 28px;
+	}
+
+	.card:not(.theming) .usage .plate {
+		width: auto;
+	}
+}
+
+/* Large screens: a bigger name. The components stay at their real size,
+   since scaling them makes 1px borders uneven */
+@media (min-width: 1600px) and (min-height: 960px) {
+	.name {
+		font-size: 68px;
+	}
 }
 
 .head {
 	grid-area: head;
-	text-align: right;
-}
-
-.flip .head {
-	text-align: left;
 }
 
 .name {
 	font-size: 60px;
-	font-style: italic;
 	font-weight: 600;
 	line-height: 1.05;
 	text-shadow:
@@ -593,13 +658,8 @@ kbd {
 .tabs {
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: flex-end;
 	align-items: center;
 	margin-top: 14px;
-}
-
-.flip .tabs {
-	justify-content: flex-start;
 }
 
 .tab {
@@ -607,7 +667,6 @@ kbd {
 	align-items: center;
 	padding: 2px 0;
 	font-size: 20px;
-	font-style: italic;
 	font-weight: 600;
 	color: var(--ivory-2);
 	background: none;
@@ -728,10 +787,6 @@ kbd {
 	opacity: 0.85;
 }
 
-.card.flip {
-	padding-top: 128px;
-}
-
 .stage {
 	grid-area: stage;
 	position: relative;
@@ -767,19 +822,6 @@ kbd {
 	width: 100%;
 	isolation: isolate;
 	animation: stage-in 0.55s var(--ease) both;
-}
-
-/* A pool of light on the floor under the subject */
-.stage-inner::before {
-	content: '';
-	position: absolute;
-	z-index: -1;
-	left: -18%;
-	right: -18%;
-	bottom: -56px;
-	height: 96px;
-	background: radial-gradient(closest-side, rgb(255 250 240 / 0.3), transparent);
-	pointer-events: none;
 }
 
 .usage {
@@ -830,7 +872,6 @@ kbd {
 }
 
 .tok-c {
-	font-style: italic;
 	opacity: 0.6;
 }
 
@@ -977,7 +1018,6 @@ kbd {
 
 .links a {
 	font-size: 21px;
-	font-style: italic;
 	font-weight: 600;
 	text-decoration: none;
 }
@@ -997,10 +1037,12 @@ kbd {
 	opacity: 0.85;
 }
 
-/* ───────── Ricebowl components, cel edition ─────────
-   Plain selectors on ricebowl's public rb-* classes. Ricebowl keeps its CSS in
-   @layer ricebowl, so these win without !important or specificity tricks. */
+/* ───────── Ricebowl components ─────────
+   Just the public rb-* classes. The library's CSS is in a layer, so these
+   win without !important. */
 
+/* Double rule, like the code plates: the border plus a fainter hairline
+   just outside it. Keyboard focus swaps the hairline for the focus ring. */
 .rb-button,
 .rb-select {
 	font-size: 17px;
@@ -1008,16 +1050,37 @@ kbd {
 	letter-spacing: 0.02em;
 	transition:
 		background 0.15s,
-		color 0.15s,
-		transform 0.12s var(--ease),
-		box-shadow 0.12s var(--ease);
+		color 0.15s;
+	outline: 1px solid color-mix(in srgb, var(--rb-color-accent) 45%, transparent);
+	outline-offset: 3px;
 }
 
 .rb-button {
 	padding: 8px 20px;
 }
 
-/* Hover inverts: accent fill, main-coloured text */
+.rb-button:focus-visible,
+.rb-select:focus-visible {
+	outline: 2px solid var(--rb-color-accent);
+	outline-offset: 3px;
+}
+
+/* Loading: the sweep along the top and bottom is normally the text colour,
+   which here is the same ink as the border. Use the fill colour instead so it
+   cuts through, and dash the outer hairline while it runs. */
+.rb-button[data-loading]::before,
+.rb-button[data-loading]::after {
+	height: calc(var(--rb-border-width) + 1px);
+	opacity: 1;
+	background-image: linear-gradient(90deg, transparent 0 50%, var(--rb-color-main) 50% 100%);
+}
+
+.rb-button[data-loading] {
+	outline-style: dashed;
+}
+
+/* Hover inverts the colours. Only set background-color: the danger tint is a
+   gradient on top, and replacing the whole background made it flash. */
 .rb-button:hover:not(:disabled):not([data-loading]),
 .rb-select:hover,
 .rb-select:focus-visible,
@@ -1025,22 +1088,13 @@ kbd {
 .rb-dropdown-item:hover,
 .rb-dropdown-item:focus-visible {
 	color: var(--rb-color-main);
-	background: var(--rb-color-accent);
+	background-color: var(--rb-color-accent);
 }
 
 .rb-button:hover:not(:disabled) .ico {
 	filter: var(--icon-filter-hover);
 }
 
-/* Pressed: slides into its own shadow */
-.rb-button:active:not(:disabled) {
-	box-shadow: none;
-	transform: translate(3px, 3px);
-}
-
-.rb-button[data-danger]:not(:hover) {
-	background: color-mix(in srgb, var(--rb-color-danger) 70%, var(--rb-color-main));
-}
 
 .rb-button:disabled {
 	opacity: 0.5;
@@ -1052,7 +1106,6 @@ kbd {
 
 .rb-tooltip {
 	font-size: 15px;
-	font-style: italic;
 	font-weight: 600;
 }
 
@@ -1092,7 +1145,7 @@ kbd {
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: center;
-	gap: 12px;
+	gap: 16px;
 }
 
 .stack {
@@ -1175,14 +1228,13 @@ kbd {
 	background: var(--rb-color-main);
 	border: var(--rb-border-width) solid var(--rb-color-accent);
 	border-radius: var(--rb-radius);
-	box-shadow: var(--rb-shadow);
 }
 
 .toolbar {
 	display: inline-flex;
 	align-items: center;
-	gap: 8px;
-	padding: 8px;
+	gap: 14px;
+	padding: 10px;
 }
 
 .toolbar-gap {
@@ -1192,8 +1244,8 @@ kbd {
 	background: var(--rb-color-accent);
 }
 
-.toolbar .is-on:not(:hover) {
-	background: color-mix(in srgb, var(--rb-color-danger) 80%, var(--rb-color-main));
+.toolbar .is-on {
+	background-image: linear-gradient(var(--rb-color-danger), var(--rb-color-danger));
 }
 
 .sizes {
@@ -1215,45 +1267,147 @@ kbd {
 	font-size: 13px;
 }
 
-.compass {
+/* Popover's drag area, drawn as a ruled chart: a hairline box with
+   rulers along the top and left, crosshairs on the chip, and a readout */
+.field {
+	position: relative;
+	width: min(100%, 640px);
+	height: min(340px, 50vh);
+	border: 1px solid var(--ivory-3);
+	background:
+		repeating-linear-gradient(90deg, var(--ivory-2) 0 1px, transparent 1px 10%) top / 100% 7px no-repeat,
+		repeating-linear-gradient(90deg, var(--ivory-3) 0 1px, transparent 1px 2%) top / 100% 4px no-repeat,
+		repeating-linear-gradient(180deg, var(--ivory-2) 0 1px, transparent 1px 10%) left / 7px 100% no-repeat,
+		repeating-linear-gradient(180deg, var(--ivory-3) 0 1px, transparent 1px 2%) left / 4px 100% no-repeat;
+}
+
+.cross {
+	position: absolute;
+	pointer-events: none;
+}
+
+.cross-x {
+	top: 0;
+	bottom: 0;
+	border-left: 1px dashed var(--ivory-3);
+}
+
+.cross-y {
+	left: 0;
+	right: 0;
+	border-top: 1px dashed var(--ivory-3);
+}
+
+.readout {
+	position: absolute;
+	top: 12px;
+	right: 14px;
+	font-family: var(--mono);
+	font-size: 12.5px;
+	text-shadow: 0 1px 2px var(--shade);
+	opacity: 0.85;
+}
+
+/* Tooltip: four triggers in a cross, spaced so each pinned tooltip has
+   room to open outward, with the forceShow switch in the middle */
+.tips {
 	display: grid;
 	grid-template-areas:
 		'. n .'
 		'w c e'
 		'. s .';
-	gap: 12px;
+	align-items: center;
+	justify-items: center;
+	gap: 56px 40px;
+	padding: 48px 120px;
 }
 
-.compass .rb-button {
-	min-width: 84px;
+.tips .rb-button {
+	min-width: 96px;
 }
 
-.compass .c-n {
+.t-n {
 	grid-area: n;
 }
-.compass .c-w {
+.t-w {
 	grid-area: w;
 }
-.compass .c-c {
+.t-c {
 	grid-area: c;
 }
-.compass .c-e {
+.t-e {
 	grid-area: e;
 }
-.compass .c-s {
+.t-s {
 	grid-area: s;
 }
 
-.compass .c-c[aria-pressed='true']:not(:hover) {
-	background: color-mix(in srgb, var(--rb-color-warning) 80%, var(--rb-color-main));
+/* Callouts: hairline leaders from the live component to its props */
+.notes {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	animation: fade-in 0.6s 0.35s var(--ease) both;
 }
 
-/* Popover's drag area, marked out with a dashed hairline */
-.field {
-	position: relative;
-	width: min(100%, 640px);
-	height: min(340px, 50vh);
-	border: 1px dashed var(--ivory-2);
+.notes svg {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+}
+
+.notes polyline {
+	fill: none;
+	stroke: var(--ivory-2);
+	stroke-width: 1;
+}
+
+.notes rect {
+	fill: var(--ivory);
+}
+
+.note {
+	position: absolute;
+	font-family: var(--mono);
+	font-size: 12.5px;
+	line-height: 1;
+	white-space: nowrap;
+	text-shadow: 0 1px 2px var(--shade);
+}
+
+.note-top {
+	translate: -50% -100%;
+}
+
+.note-bottom {
+	translate: -50% 0;
+}
+
+.note-left {
+	translate: -100% -50%;
+}
+
+.note-right {
+	translate: 0 -50%;
+}
+
+/* Too cramped for callouts on narrow screens */
+@media (max-width: 999px) {
+	.notes {
+		display: none;
+	}
+
+	.tips {
+		gap: 48px 10px;
+		padding: 40px 0;
+	}
+
+	.tips .rb-button {
+		min-width: 0;
+	}
+
 }
 
 .drag {
@@ -1280,7 +1434,7 @@ kbd {
 	left: 50%;
 	bottom: 14px;
 	display: flex;
-	gap: 8px;
+	gap: 14px;
 	translate: -50% 0;
 }
 
@@ -1296,7 +1450,6 @@ kbd {
 	width: auto;
 	padding: 8px 16px;
 	font-size: 16px;
-	font-style: italic;
 }
 
 .w-wide {
@@ -1304,33 +1457,32 @@ kbd {
 	text-align: left;
 }
 
-.grain {
+.faces {
 	display: grid;
 	gap: 14px;
 	width: min(100%, 400px);
 }
 
-.grain-card {
+.face-card {
 	animation: fade-in 0.4s var(--ease) both;
 }
 
-.grain-card h4,
-.bag-box h4,
+.face-card h4,
+.bowl-box h4,
 .modal h2 {
 	font-size: 24px;
-	font-style: italic;
 	font-weight: 600;
 	line-height: 1.15;
 }
 
-.grain-card p,
-.bag-box p,
+.face-card p,
+.bowl-box p,
 .modal-copy {
 	margin-top: 2px;
 	color: var(--rb-color-dim);
 }
 
-.grain-card dl {
+.face-card dl {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
 	gap: 12px;
@@ -1339,8 +1491,8 @@ kbd {
 	border-top: 1px solid color-mix(in srgb, var(--rb-color-accent) 45%, transparent);
 }
 
-.grain-card dt,
-.order label {
+.face-card dt,
+.rename-form label {
 	font-family: var(--sc);
 	font-size: 13px;
 	font-weight: 700;
@@ -1348,13 +1500,13 @@ kbd {
 	color: var(--rb-color-dim);
 }
 
-.grain-card dd {
+.face-card dd {
 	margin: 0;
 	font-family: var(--mono);
 	font-size: 13.5px;
 }
 
-.bag-box {
+.bowl-box {
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;
@@ -1362,10 +1514,12 @@ kbd {
 	min-height: 210px;
 }
 
-.bag-box .rb-box-icon {
-	width: 55%;
-	right: -4%;
-	top: 46%;
+/* Thin line art, so it can sit a little stronger than Box's default 0.2 */
+.bowl-box .rb-box-icon {
+	width: 46%;
+	right: 6%;
+	top: 44%;
+	opacity: 0.32;
 }
 
 .surface-card {
@@ -1373,29 +1527,29 @@ kbd {
 	padding: 18px;
 }
 
-.pantry {
+.storage {
 	margin: 0;
 	padding: 0;
 	list-style: none;
 }
 
-.pantry li {
+.storage li {
 	display: flex;
 	justify-content: space-between;
 	padding: 10px 0;
 	border-bottom: 1px solid color-mix(in srgb, var(--rb-color-accent) 40%, transparent);
 }
 
-.pantry li:first-child {
+.storage li:first-child {
 	padding-top: 0;
 }
 
-.pantry li:last-child {
+.storage li:last-child {
 	padding-bottom: 0;
 	border-bottom: none;
 }
 
-.pantry .dim {
+.storage .dim {
 	font-family: var(--mono);
 	font-size: 14px;
 }
@@ -1452,13 +1606,13 @@ kbd {
 	font-size: 15px;
 }
 
-.order {
+.rename-form {
 	display: grid;
 	gap: 8px;
 	text-align: left;
 }
 
-.order input {
+.rename-form input {
 	width: 100%;
 	margin-bottom: 8px;
 	padding: 9px 12px;
@@ -1524,18 +1678,12 @@ kbd {
 	width: 250px;
 	margin: 4px 0;
 	padding: 12px 16px;
-	/* Static specimens: hovering would start their fade-out timers.
-	   !important only because ricebowl sets pointer-events inline. */
+	/* These are just for show, and hovering would start their timers.
+	   !important because the library sets pointer-events inline. */
 	pointer-events: none !important;
 }
 
 /* ───────── Motion ───────── */
-
-@keyframes spin {
-	to {
-		rotate: 360deg;
-	}
-}
 
 @keyframes ink-in {
 	from {
@@ -1600,6 +1748,17 @@ kbd {
 		padding-top: 116px;
 	}
 
+	/* No spare height to centre in: Theme's token list fills its column, so
+	   the CSS goes beside it, under the specimens */
+	.card.flip.theming {
+		grid-template-rows: auto minmax(0, 1fr) auto;
+		grid-template-areas:
+			'head stage'
+			'body stage'
+			'body usage';
+		row-gap: 18px;
+	}
+
 	.name {
 		font-size: 52px;
 	}
@@ -1630,7 +1789,12 @@ kbd {
 	}
 
 	.specimen {
-		gap: 14px;
+		gap: 12px;
+	}
+
+	.tips {
+		gap: 36px 40px;
+		padding: 28px 120px;
 	}
 }
 
@@ -1655,16 +1819,6 @@ kbd {
 			'body'
 			'usage';
 		row-gap: 30px;
-	}
-
-	.head,
-	.flip .head {
-		text-align: left;
-	}
-
-	.tabs,
-	.flip .tabs {
-		justify-content: flex-start;
 	}
 
 	.body {

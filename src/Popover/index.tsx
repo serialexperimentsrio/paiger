@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import style from './style.module.css'
 import {
 	type PopoverPosition,
@@ -37,7 +37,7 @@ function PopoverContent({
 	const previousOpenRef = useRef<boolean>(open)
 
 	useEffect(() => {
-		// Skip if `open` hasn't actually changed or we're still in the measurement phase.
+		// Nothing to do unless `open` really changed, and not while measuring
 		if (previousOpenRef.current === open || isMeasuring) return
 		previousOpenRef.current = open
 
@@ -51,8 +51,7 @@ function PopoverContent({
 		let currentSize = { width: 0, height: 0 }
 
 		if (open) {
-			// Use the size measured by the parent before the popover was shown,
-			// so the height animation starts from 0 and expands to the right value.
+			// Grow from 0 to the height measured before it was shown
 			currentSize = openSizeRef.current || { width: 0, height: 0 }
 
 			popoverRef.current.style.height = '0px'
@@ -68,8 +67,7 @@ function PopoverContent({
 
 			animationRef.current = popoverRef.current.animate(keyframes, POPOVER_CONFIG.animation)
 
-			// Cancel the fill:forwards effect once open so the popover can
-			// resize naturally if its content changes after it's open.
+			// Once open, drop the fill so the popover can resize with its content
 			animationRef.current.onfinish = () => {
 				if (popoverRef.current && open) {
 					animationRef.current?.cancel()
@@ -94,9 +92,6 @@ function PopoverContent({
 				if (onAnimationComplete) onAnimationComplete()
 			}
 		}
-		// popoverRef, actualContentRef, openSizeRef are stable refs — excluding them
-		// is intentional so this only re-runs when open/position/isMeasuring changes.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [open, position, onAnimationComplete, isMeasuring])
 
 	useEffect(() => {
@@ -164,8 +159,6 @@ export function Popover({
 	const popoverRef = useRef<HTMLDivElement>(null)
 	const popoverContentRef = useRef<HTMLDivElement>(null)
 	const openSizeRef = useRef<{ width: number; height: number } | null>(null)
-	const baseId = useId()
-	const popoverId = `popover-${baseId}`
 
 	const measureSize = () =>
 		popoverRef.current ? measurePopoverSize(popoverRef.current) : null
@@ -173,16 +166,16 @@ export function Popover({
 	const calculatePosition = (size: { width: number; height: number } | null) => {
 		if (!childrenRef.current) return {}
 		const rect = childrenRef.current.getBoundingClientRect()
-		// If the trigger has no dimensions it's probably not rendered yet — bail.
+		// No size at all means the trigger isn't rendered yet
 		if (rect.width === 0 && rect.height === 0 && rect.top === 0 && rect.left === 0)
 			return {}
 
 		const isFixed = isInsideFixedContainer(childrenRef.current)
-		const scrollTop = isFixed ? 0 : window.pageYOffset || document.documentElement.scrollTop
-		const scrollLeft = isFixed ? 0 : window.pageXOffset || document.documentElement.scrollLeft
+		const scrollTop = isFixed ? 0 : window.scrollY
+		const scrollLeft = isFixed ? 0 : window.scrollX
 
 		const position = determinePosition(
-			rect, size, scrollTop, scrollLeft, isFixed,
+			rect, size, scrollTop, isFixed,
 			above, below, left, right, smartPositions
 		)
 		setCurrentPosition(position)
@@ -198,9 +191,8 @@ export function Popover({
 		let finalPosition: React.CSSProperties = {}
 
 		try {
-			// Two-pass measurement: first get the natural (unconstrained) size,
-			// then re-measure with the estimated position applied so viewport
-			// constraints are baked in before the animation starts.
+			// Measure twice: once at its natural size, then again in roughly the
+			// right spot, so viewport limits are already applied when it animates
 			const naturalSize = measureSize()
 			if (!naturalSize) return
 
@@ -209,8 +201,6 @@ export function Popover({
 
 			setIsMeasuring(true)
 
-			// Force the popover invisible before showing it so the measurement
-			// pass never flickers on screen.
 			Object.assign(popoverRef.current.style, {
 				...(estimatedPosition as React.CSSProperties),
 				width: 'auto',
@@ -226,7 +216,7 @@ export function Popover({
 			popoverRef.current.showPopover()
 
 			await new Promise((resolve) => requestAnimationFrame(resolve))
-			// The popover can unmount while we wait a frame
+			// It may have unmounted during that frame
 			if (!popoverRef.current) return
 			const constrainedRect = popoverRef.current.getBoundingClientRect()
 			finalSize =
@@ -239,8 +229,7 @@ export function Popover({
 				finalPosition = estimatedPosition
 			}
 
-			// Apply the final position while still hidden so the animation
-			// starts from exactly the right place.
+			// Move it into place while still hidden
 			Object.assign(popoverRef.current.style, {
 				...(finalPosition as React.CSSProperties),
 				contain: 'layout style'
@@ -260,8 +249,7 @@ export function Popover({
 		await new Promise((resolve) => requestAnimationFrame(resolve))
 		if (!popoverRef.current) return
 
-		// Set the initial animation state (height: 0) before calling showPopover
-		// so the entrance animation has a defined start frame.
+		// Start collapsed, then show it and let the animation open it up
 		Object.assign(popoverRef.current.style, {
 			...(finalPosition as React.CSSProperties),
 			height: '0px',
@@ -301,7 +289,7 @@ export function Popover({
 		const updatePosition = () => {
 			if (!popoverRef.current || !childrenRef.current) return
 
-			// Reset size constraints so we measure the current natural size.
+			// Measure its current natural size
 			popoverRef.current.style.height = 'auto'
 			popoverRef.current.style.maxWidth = 'none'
 			popoverRef.current.style.maxHeight = 'none'
@@ -320,14 +308,14 @@ export function Popover({
 			let scrollTop = 0, scrollLeft = 0
 
 			if (!isFixed) {
-				scrollTop = window.pageYOffset || document.documentElement.scrollTop
-				scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
+				scrollTop = window.scrollY
+				scrollLeft = window.scrollX
 			}
 
 			const { viewportPadding: padding, triggerSpacing: spacing } = POPOVER_CONFIG
 
-			// Smart positioning only runs on initial open — repositioning keeps
-			// the same direction so the popover doesn't jump sides on scroll/resize.
+			// Keep the side picked when it opened, so it doesn't flip around while
+			// you scroll or resize
 			const positionStyle = createPositionStyle(
 				currentPosition, triggerRect, spacing, padding,
 				scrollTop, scrollLeft, isFixed, size, matchTriggerWidth
@@ -339,7 +327,6 @@ export function Popover({
 		}
 
 		return setupObservers(childrenRef.current, popoverContentRef.current, updatePosition)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isVisible])
 
 	useEffect(() => {
@@ -352,8 +339,7 @@ export function Popover({
 			if (outsidePopover && outsideTrigger) closePopover()
 		}
 
-		// Delay attaching the listener by one tick so the click that opened
-		// the popover doesn't immediately close it.
+		// Wait a tick, or the click that opened it would close it again
 		const timer = setTimeout(
 			() => document.addEventListener('mousedown', handleClickOutside),
 			0
@@ -362,7 +348,6 @@ export function Popover({
 			clearTimeout(timer)
 			document.removeEventListener('mousedown', handleClickOutside)
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isVisible, noCloseOnClickOutside])
 
 	useEffect(() => {
@@ -370,8 +355,7 @@ export function Popover({
 			const frameId = requestAnimationFrame(openPopover)
 			return () => cancelAnimationFrame(frameId)
 		}
-		// Intentionally runs once on mount only.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		// Mount only
 	}, [])
 
 	const contentElement =
@@ -403,7 +387,6 @@ export function Popover({
 			<div
 				ref={popoverRef}
 				popover="manual"
-				id={popoverId}
 				className={`rb-popover ${style.popover}`}
 				style={{ ...positionStyle, ...customStyle } as React.CSSProperties}
 			>

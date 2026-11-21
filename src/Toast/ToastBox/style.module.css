@@ -1,4 +1,3 @@
-/* Inside a cascade layer, so any unlayered app CSS wins regardless of specificity or load order */
 @layer ricebowl {
 	.toast {
 		display: block;
@@ -16,7 +15,7 @@
 		margin: 0;
 	}
 
-	/* --rb-toast-fade is set inline from FADE_MS, which also times the removal */
+	/* Set inline from FADE_MS, which also decides when the toast is removed */
 	.toast.closing {
 		opacity: 0;
 		transform: scale(0.96);
@@ -25,19 +24,26 @@
 			transform var(--rb-toast-fade) cubic-bezier(0.4, 0, 1, 1);
 	}
 
-	/* Each type tints the theme's main and accent colours */
+	/* Same trick as the danger button: tint on top, solid colour underneath,
+	   so nothing shows through */
 	.toast[data-type='error'] {
-		background: color-mix(in srgb, var(--rb-color-danger) 40%, var(--rb-color-main));
+		background:
+			linear-gradient(var(--rb-color-danger), var(--rb-color-danger)),
+			var(--rb-color-main);
 		border-color: color-mix(in srgb, var(--rb-color-danger) 80%, var(--rb-color-accent));
 	}
 
 	.toast[data-type='warning'] {
-		background: color-mix(in srgb, var(--rb-color-warning) 40%, var(--rb-color-main));
+		background:
+			linear-gradient(var(--rb-color-warning), var(--rb-color-warning)),
+			var(--rb-color-main);
 		border-color: color-mix(in srgb, var(--rb-color-warning) 80%, var(--rb-color-accent));
 	}
 
 	.toast[data-type='success'] {
-		background: color-mix(in srgb, var(--rb-color-success) 40%, var(--rb-color-main));
+		background:
+			linear-gradient(var(--rb-color-success), var(--rb-color-success)),
+			var(--rb-color-main);
 		border-color: color-mix(in srgb, var(--rb-color-success) 80%, var(--rb-color-accent));
 	}
 

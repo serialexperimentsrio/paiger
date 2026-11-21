@@ -3,5 +3,5 @@ declare module '*.module.css' {
   export default classes
 }
 
-// Plain CSS side-effect imports (TypeScript 6 checks these)
+// Plain `import "./x.css"` imports, which TypeScript 6 now checks
 declare module '*.css'

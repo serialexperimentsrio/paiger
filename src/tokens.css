@@ -1,7 +1,7 @@
-/* Default theme, bundled into ricebowl/styles.css. :where() gives these zero
-   specificity, so an app's own :root values always win, even though the JS
-   bundle also injects this CSS at the end of <head> at runtime. */
-/* Inside a cascade layer, so any unlayered app CSS wins regardless of specificity or load order */
+/* The default theme. All of ricebowl's CSS sits in the `ricebowl` layer, so
+   any CSS of yours outside a layer wins, whatever its specificity or order.
+   :where() keeps these at zero specificity on top of that, because the JS
+   bundle injects this at the end of <head>. */
 @layer ricebowl {
 	:where(:root) {
 		/* Colors */
@@ -16,7 +16,7 @@
 
 		--rb-border-width: 2px;
 		--rb-radius: 0px; /* corner radius of every surface */
-		--rb-shadow: 0 0 #0000; /* drop shadow of every surface; keep it a valid shadow, not none */
+		--rb-shadow: 0 0 #0000; /* drop shadow of every surface; must be a real shadow, not none */
 		--rb-font: inherit; /* font of every component */
 
 		/* Z-index layers */

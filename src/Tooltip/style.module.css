@@ -1,4 +1,3 @@
-/* Inside a cascade layer, so any unlayered app CSS wins regardless of specificity or load order */
 @layer ricebowl {
 	.tooltip {
 		pointer-events: none;

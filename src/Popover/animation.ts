@@ -9,8 +9,7 @@ export const createAnimationKeyframes = (
 	matchTriggerWidth: boolean = true
 ): Keyframe[] => {
 	const baseTransform = TRANSFORMS[position]
-	// Centered popovers use translateX(-50%) for horizontal centering — include
-	// it in every keyframe so the animation never strips the centering transform.
+	// Centred popovers rely on translateX(-50%), so every keyframe needs it too
 	const centerPrefix = !matchTriggerWidth && (position === 'below' || position === 'above') ? 'translateX(-50%) ' : ''
 
 	const offsets = {
@@ -41,13 +40,12 @@ export const measurePopoverSize = (
 	element: HTMLDivElement
 ): { width: number; height: number } | null => {
 	try {
-		// Cancel any running animations so they don't distort the measurement.
+		// A running animation would throw the measurement off
 		element.getAnimations().forEach((anim) => anim.cancel())
 
 		const original = element.style.cssText
 
-		// Position off-screen and make invisible before showing so measurement
-		// never flickers on screen, then read the natural bounding rect.
+		// Show it invisibly at its natural size, measure, then put everything back
 		element.style.cssText = [
 			'opacity: 0 !important',
 			'position: fixed !important',

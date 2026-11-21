@@ -59,7 +59,7 @@ function Medallion({ x, y, thin }: { x: number; y: number; thin: number }) {
 }
 
 /** One corner of the frame. The frame line sits at (24, 24) in its 160 unit box. */
-export function Corner({ className }: { className?: string }) {
+function Corner({ className }: { className?: string }) {
 	return (
 		<svg className={className} viewBox="0 0 160 160" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" aria-hidden="true">
 			<g>{HALF}</g>
@@ -92,14 +92,5 @@ export function Frame() {
 			<i className="edge left" />
 			<i className="edge right" />
 		</div>
-	)
-}
-
-/** The corner medallion at full size, faint behind the title */
-export function Sigil({ className }: { className?: string }) {
-	return (
-		<svg className={className} viewBox="0 0 36 36" fill="none" stroke="currentColor" strokeWidth="0.4" aria-hidden="true">
-			<Medallion x={18} y={18} thin={0.28} />
-		</svg>
 	)
 }

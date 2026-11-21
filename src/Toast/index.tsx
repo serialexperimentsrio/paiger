@@ -9,8 +9,7 @@ type YLocation = 'top' | 'bottom'
 type ForceUpdateFn = (value: Record<string, never>) => void
 
 let toasts: ToastBoxProps[] = []
-// `removedToasts` keeps height info for toasts mid-exit so the stack
-// doesn't collapse before the fade-out finishes.
+// Heights of toasts that are fading out, so the stack doesn't collapse early
 let removedToasts: Record<string, number> = {}
 let fadedToasts: Record<string, boolean> = {}
 let xLocation: XLocation = 'right'
@@ -38,8 +37,6 @@ const ToastPortalContent = ({
 		isPlaceholder?: boolean
 	}
 
-	// Merge live toasts with invisible placeholders for ones still fading out,
-	// so the stack doesn't jump when a toast is removed.
 	const allToasts: ExtendedToastBoxProps[] = [...toasts]
 	Object.entries(removedToasts).forEach(([id, height]) => {
 		if (!allToasts.some((t) => t.id === id)) {
@@ -54,7 +51,6 @@ const ToastPortalContent = ({
 		}
 	})
 
-	// Total height drives the container's offset so toasts stack from the edge inward.
 	const totalHeight = allToasts.reduce(
 		(acc, toast) => acc + toast.height + 10,
 		8
@@ -67,7 +63,7 @@ const ToastPortalContent = ({
 			? { top: `calc(100% - ${totalHeight}px)` }
 			: { bottom: `calc(100% - ${totalHeight}px)` }),
 		[xLocation]: 0,
-		// Without an explicit transform the first toast animates in from the wrong x offset
+		// Without this the first toast slides in from the wrong side
 		transform: 'translateX(0)'
 	}
 
@@ -83,7 +79,7 @@ const ToastPortalContent = ({
 			}}
 		>
 			{toastList.map((toast) => {
-				// Hold the space with a hidden placeholder while the toast fades out
+				// Keep the gap while it fades out
 				if (
 					(toast as ExtendedToastBoxProps).isPlaceholder ||
 					fadedToasts[toast.id]
@@ -155,7 +151,7 @@ const cleanupToasts = () => {
 	toasts = []
 	updatePortal()
 
-	// Defer by two frames so exit animations can finish painting.
+	// Let the last fade finish painting first
 	requestAnimationFrame(() => {
 		requestAnimationFrame(() => {
 			removedToasts = {}
@@ -182,13 +178,11 @@ const handleRemoveToast = (id: string) => {
 }
 
 export const popToast = (content: string, type?: ToastType) => {
-	// No DOM during server rendering
+	// Nothing to do on the server
 	if (typeof document === 'undefined') return
 
-	// Defer to the next frame so the DOM is ready to measure height.
 	requestAnimationFrame(() => {
-		// Render into a hidden container to measure the real height before
-		// adding to the stack, so the container offset is right from the start.
+		// Render it off-screen first to find out how tall it is
 		const tempContainer = document.createElement('div')
 		tempContainer.style.position = 'absolute'
 		tempContainer.style.visibility = 'hidden'
@@ -207,7 +201,6 @@ export const popToast = (content: string, type?: ToastType) => {
 			/>
 		)
 
-		// Wait a frame for the render to land before measuring
 		requestAnimationFrame(() => {
 			const toastElement = tempContainer.firstElementChild as HTMLElement
 			const boxHeight = toastElement ? toastElement.offsetHeight : 50

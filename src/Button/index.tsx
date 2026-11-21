@@ -23,8 +23,8 @@ export const Button = forwardRef(
 		const isLoading = loading || forceLoading
 
 		const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
-			// Not natively disabled while loading (that would drop keyboard focus),
-			// so block repeat activations here.
+			// We don't set `disabled` while loading because that drops keyboard focus,
+			// so ignore extra clicks here instead
 			if (isLoading) {
 				e.preventDefault()
 				return

@@ -3,8 +3,8 @@ import ReactDOM from 'react-dom/client'
 import { ANIMATION_CONFIG } from './animationConfig'
 import style from './style.module.css'
 
-// Single global modal state — only one modal is shown at a time.
-// `previousModal` lets us restore the last modal after a nested one closes.
+// There is only ever one modal on screen, so its state lives up here.
+// previousModal is what openPreviousModal() goes back to.
 let currentModal: React.ReactNode | undefined
 let previousModal: React.ReactNode | undefined
 let previousOnClose: (() => void) | undefined
@@ -12,9 +12,9 @@ export let modalActive = false
 let onCloseCallback: (() => void) | undefined
 let closeInnerModalFn: ((isNested?: boolean) => void) | undefined
 
-// Single timeout ID so we can cancel a pending transition if a new one starts.
+// Pending transition, cancelled if another one starts
 let modalTimeoutId: number | undefined
-// Generation counter prevents stale callbacks from running after rapid open/close.
+// Bumped on every setModal, so timers from an older call know they're stale
 let modalGeneration = 0
 
 export const registerCloseAnimation = (
@@ -34,8 +34,8 @@ const clearModalTimeout = () => {
 	}
 }
 
-// Each new modal gets a unique key so React treats it as a fresh mount,
-// which ensures entrance animations always fire even for the same component.
+// A fresh key makes React remount, so the open animation plays even when the
+// same component is shown twice in a row
 const addKeyToModalContent = (content: React.ReactNode): React.ReactNode => {
 	if (React.isValidElement(content)) {
 		const uniqueKey = `modal-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
@@ -57,7 +57,7 @@ export const setModal = (content: React.ReactNode, onClose?: () => void) => {
 
 	const contentWithKey = addKeyToModalContent(content)
 
-	// No active modal — open directly without any transition delay.
+	// Nothing open yet, so just show it
 	if (!modalActive && !isTransitioningBetweenModals) {
 		currentModal = contentWithKey
 		onCloseCallback = onClose
@@ -66,8 +66,8 @@ export const setModal = (content: React.ReactNode, onClose?: () => void) => {
 		return
 	}
 
-	// A modal is already open: close it first, then open the new one.
-	// The short gap between close and open lets the exit animation finish.
+	// Something is already open: close it, wait for that to finish, then open
+	// the new one
 	isTransitioningBetweenModals = true
 
 	if (closeInnerModalFn) closeInnerModalFn(true)
@@ -84,7 +84,7 @@ export const setModal = (content: React.ReactNode, onClose?: () => void) => {
 		currentModal = undefined
 		if (portalUpdateFn) portalUpdateFn({})
 
-		// One frame gap so the DOM clears before the new modal mounts.
+		// Give the old one a frame to unmount
 		window.setTimeout(() => {
 			if (currentGeneration !== modalGeneration) return
 
@@ -111,8 +111,8 @@ export const hideModal = () => {
 
 	if (portalUpdateFn) portalUpdateFn({})
 
-	// Wait for the exit animation to finish before clearing the content,
-	// otherwise the modal disappears before it has a chance to animate out.
+	// Keep the content around until the close animation is done, or it would
+	// just vanish
 	modalTimeoutId = window.setTimeout(() => {
 		if (!modalActive) {
 			currentModal = undefined
@@ -124,7 +124,7 @@ export const hideModal = () => {
 
 let portalUpdateFn: ((value: Record<string, never>) => void) | null = null
 
-// Escape and backdrop clicks both count as the user dismissing the modal
+// Escape and clicking the backdrop both count as dismissing it
 const dismissModal = () => {
 	onCloseCallback?.()
 	hideModal()
@@ -146,8 +146,7 @@ const ModalPortal = () => {
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (e.key === 'Escape' && modalActive) dismissModal()
 
-			// Focus trap: keep Tab cycling inside the dialog so keyboard users
-			// can't accidentally navigate behind the modal.
+			// Keep Tab inside the dialog
 			if (e.key === 'Tab' && modalActive && dialogRef.current) {
 				const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
 					'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -172,7 +171,7 @@ const ModalPortal = () => {
 		return () => document.removeEventListener('keydown', handleKeyDown)
 	}, [])
 
-	// Save focus before the modal opens so we can restore it on close.
+	// Remember what had focus, and give it back on close
 	useEffect(() => {
 		if (modalActive) {
 			previousFocusRef.current = document.activeElement
@@ -188,7 +187,6 @@ const ModalPortal = () => {
 			}
 			previousFocusRef.current = null
 		}
-	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [modalActive])
 
 	return (

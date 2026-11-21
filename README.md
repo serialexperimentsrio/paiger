@@ -134,11 +134,13 @@ If your own CSS is in layers too (Tailwind v4 is), declare ricebowl's layer firs
 
 `Box`, `Button`, `IconButton`, `Icon`, `Loading`, `Panel`, `Select` and `ModalBox` also accept a `className`, which is added alongside these.
 
-### Upgrading from 0.2.x
+## Upgrading
+
+### From 0.2.x
 
 0.3.0 renames the package from `ricebag` to `ricebowl`. Swap the dependency, then change `from 'ricebag'` to `from 'ricebowl'` and `ricebag/styles.css` to `ricebowl/styles.css`. The cascade layer is now `ricebowl` too, so update any `@layer ricebag, …` order declaration. The `--rb-*` variables and `rb-*` class names are unchanged.
 
-### Upgrading from 0.1.x
+### From 0.1.x
 
 0.2.0 prefixes every variable with `rb-` so ricebowl's names can't collide with your app's own. Rename `--color-*`, `--z-*` and `--transition-*` to `--rb-color-*`, `--rb-z-*` and `--rb-transition-*`. `--z-box-content` and `--transition-slow` were removed.
 

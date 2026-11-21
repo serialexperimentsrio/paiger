@@ -20,6 +20,7 @@ import {
 	toast,
 	type ToastType
 } from 'ricebowl'
+import { Notes, type Note } from './notes'
 import { Glyph } from './ornaments'
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -104,6 +105,8 @@ type Item = {
 	traits: string[]
 	props: [string, string][]
 	code: string
+	/** Callouts tying parts of the live demo to their props */
+	notes?: Note[]
 	Demo: ComponentType
 }
 
@@ -176,6 +179,7 @@ function CategoryScreen({ id, title, items, flip }: Category & { flip: boolean }
 				<Glyph text={GLYPHS[id]} />
 				<div className="stage-inner" key={item.key}>
 					<Demo />
+					{item.notes && <Notes notes={item.notes} />}
 				</div>
 			</div>
 
@@ -214,24 +218,24 @@ function ButtonDemo() {
 				<Button
 					onClick={async () => {
 						await sleep(1800)
-						toast('Rice is ready.', 'success')
+						toast('Saved.', 'success')
 					}}
 				>
-					Cook rice
+					Save
 				</Button>
 				<Button
 					danger
 					onClick={async () => {
 						await sleep(1200)
-						toast('Burnt the bottom of the pot.', 'error')
+						toast('Deleted.', 'warning')
 					}}
 				>
-					Burn it
+					Delete
 				</Button>
-				<Button disabled>Sold out</Button>
+				<Button disabled>Unavailable</Button>
 			</div>
 			<div className="row">
-				<Button forceLoading={forced}>{forced ? 'Steaming' : 'Idle'}</Button>
+				<Button forceLoading={forced}>{forced ? 'Loading' : 'Idle'}</Button>
 				<label className="switch">
 					<input type="checkbox" checked={forced} onChange={(e) => setForced(e.target.checked)} />
 					<span aria-hidden="true" />
@@ -269,7 +273,7 @@ function IconButtonDemo() {
 					aria-label="Download"
 					onClick={async () => {
 						await sleep(1400)
-						toast('recipe.pdf downloaded', 'info')
+						toast('report.pdf downloaded', 'info')
 					}}
 				>
 					<Ico name="download" />
@@ -297,7 +301,7 @@ function IconDemo() {
 		<div className="sizes">
 			{[16, 24, 32, 48].map((s) => (
 				<figure key={s}>
-					<Ico name="grain" size={s} />
+					<Ico name="layers" size={s} />
 					<figcaption>{s}px</figcaption>
 				</figure>
 			))}
@@ -305,26 +309,27 @@ function IconDemo() {
 	)
 }
 
+/** All four directions pinned open at once, with forceShow on a switch */
 function TooltipDemo() {
-	const [pinned, setPinned] = useState(false)
+	const [pinned, setPinned] = useState(true)
 	return (
-		<div className="compass">
-			<Tooltip text="above" above>
-				<Button className="c-n">Up</Button>
+		<div className="tips">
+			<Tooltip text="above" above forceShow={pinned}>
+				<Button className="t-n">Up</Button>
 			</Tooltip>
-			<Tooltip text="left" left>
-				<Button className="c-w">Left</Button>
+			<Tooltip text="left" left forceShow={pinned}>
+				<Button className="t-w">Left</Button>
 			</Tooltip>
-			<Tooltip text="Pinned with forceShow" forceShow={pinned} right>
-				<Button className="c-c" onClick={() => setPinned(!pinned)} aria-pressed={pinned}>
-					{pinned ? 'Unpin' : 'Pin'}
-				</Button>
+			<label className="switch t-c">
+				<input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} />
+				<span aria-hidden="true" />
+				<code>forceShow</code>
+			</label>
+			<Tooltip text="right" right forceShow={pinned}>
+				<Button className="t-e">Right</Button>
 			</Tooltip>
-			<Tooltip text="right" right>
-				<Button className="c-e">Right</Button>
-			</Tooltip>
-			<Tooltip text="below (default)">
-				<Button className="c-s">Down</Button>
+			<Tooltip text="below (default)" forceShow={pinned}>
+				<Button className="t-s">Down</Button>
 			</Tooltip>
 		</div>
 	)
@@ -336,8 +341,8 @@ function PopoverDemo() {
 	const drag = useRef<{ dx: number; dy: number; moved: boolean } | null>(null)
 	const closeRef = useRef<() => void>(() => {})
 
-	// Window listeners rather than pointer capture: capture would retarget the
-	// final click away from the Popover trigger.
+	// Listen on window instead of using pointer capture, which would send the
+	// final click somewhere other than the Popover trigger
 	const onPointerDown = (e: React.PointerEvent) => {
 		const d = { dx: e.clientX, dy: e.clientY, moved: false }
 		drag.current = d
@@ -359,7 +364,7 @@ function PopoverDemo() {
 		const up = () => {
 			window.removeEventListener('pointermove', move)
 			window.removeEventListener('pointerup', up)
-			// Clear after the click that follows pointerup has been swallowed
+			// Clear it after the click that follows has been swallowed
 			setTimeout(() => (drag.current = null))
 		}
 		window.addEventListener('pointermove', move)
@@ -368,11 +373,17 @@ function PopoverDemo() {
 
 	return (
 		<div className="field" ref={fieldRef}>
+			{/* Crosshairs and a readout follow the chip across the ruled chart */}
+			<i className="cross cross-x" style={{ left: `${pos.x}%` }} aria-hidden="true" />
+			<i className="cross cross-y" style={{ top: `${pos.y}%` }} aria-hidden="true" />
+			<span className="readout" aria-hidden="true">
+				x {Math.round(pos.x)}% · y {Math.round(pos.y)}%
+			</span>
 			<div
 				className="drag"
 				style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
 				onPointerDown={onPointerDown}
-				// Swallow the click that ends a drag, so dragging doesn't toggle the popover
+				// A drag ends in a click; don't let that toggle the popover
 				onClickCapture={(e) => drag.current?.moved && e.stopPropagation()}
 			>
 				<Popover
@@ -387,7 +398,7 @@ function PopoverDemo() {
 					}}
 				>
 					<Button className="drag-chip">
-						<Ico name="grain" size={16} /> Drag me, then click
+						<Ico name="cursor" size={16} /> Drag me, then click
 					</Button>
 				</Popover>
 			</div>
@@ -412,7 +423,7 @@ function PopoverDemo() {
 function DropdownDemo() {
 	const exportAs = (fmt: string) => async () => {
 		await sleep(900)
-		toast(`Exported menu.${fmt}`, 'success')
+		toast(`Exported export.${fmt}`, 'success')
 	}
 	return (
 		<div className="row">
@@ -429,9 +440,9 @@ function DropdownDemo() {
 			<Dropdown
 				above
 				items={[
-					{ key: 'r', label: 'Rinse', onPick: () => toast('Rinsed') },
-					{ key: 's', label: 'Soak', onPick: () => toast('Soaking for 30 minutes', 'info') },
-					{ key: 'c', label: 'Cook', onPick: () => toast('Keep the lid on', 'warning') }
+					{ key: 'd', label: 'Duplicate', onPick: () => toast('Duplicated') },
+					{ key: 'r', label: 'Rename', onPick: () => toast('Renamed', 'info') },
+					{ key: 'a', label: 'Archive', onPick: () => toast('Archived', 'warning') }
 				]}
 			>
 				<Button className="w-wide">Opens above</Button>
@@ -440,44 +451,44 @@ function DropdownDemo() {
 	)
 }
 
-const GRAINS = [
-	{ key: 'koshi', name: 'Koshihikari', origin: 'Niigata, JP', shape: 'Short', ratio: '1 : 1.1', note: 'Glossy, sticky and slightly sweet.' },
-	{ key: 'basmati', name: 'Basmati', origin: 'Punjab', shape: 'Extra long', ratio: '1 : 1.5', note: 'Stays separate and gets longer as it cooks.' },
-	{ key: 'jasmine', name: 'Jasmine', origin: 'Isan, TH', shape: 'Long', ratio: '1 : 1.25', note: 'Fragrant, soft and a little clingy.' },
-	{ key: 'arborio', name: 'Arborio', origin: 'Piedmont, IT', shape: 'Medium', ratio: '1 : 3', note: 'Releases starch, which makes risotto creamy.' },
-	{ key: 'bomba', name: 'Bomba', origin: 'Valencia, ES', shape: 'Round', ratio: '1 : 3', note: 'Soaks up stock without bursting. Used for paella.' }
+export const FACES = [
+	{ key: 'garamond', name: 'Garamond', origin: 'Paris, FR', year: '1530s', cls: 'Old-style', note: 'Open counters and a calm, calligraphic rhythm.' },
+	{ key: 'caslon', name: 'Caslon', origin: 'London, UK', year: '1720s', cls: 'Old-style', note: 'Sturdy and plain, made for long reading.' },
+	{ key: 'baskerville', name: 'Baskerville', origin: 'Birmingham, UK', year: '1757', cls: 'Transitional', note: 'Sharper contrast and rounder letters.' },
+	{ key: 'didot', name: 'Didot', origin: 'Paris, FR', year: '1784', cls: 'Didone', note: 'High contrast, cut for smooth paper.' },
+	{ key: 'bodoni', name: 'Bodoni', origin: 'Parma, IT', year: '1798', cls: 'Didone', note: 'Hairline serifs against heavy stems.' }
 ]
 
 function SelectDemo() {
-	const [grain, setGrain] = useState(GRAINS[0])
+	const [face, setFace] = useState(FACES[0])
 	return (
-		<div className="grain">
+		<div className="faces">
 			<Select
-				options={GRAINS.map((g, i) => ({
+				options={FACES.map((g, i) => ({
 					key: g.key,
 					name: g.name,
 					default: i === 0,
 					onPick: async () => {
 						await sleep(450)
-						setGrain(g)
+						setFace(g)
 					}
 				}))}
 			/>
-			<Box className="grain-card" key={grain.key}>
-				<h4>{grain.name}</h4>
-				<p>{grain.note}</p>
+			<Box className="face-card" key={face.key}>
+				<h4>{face.name}</h4>
+				<p>{face.note}</p>
 				<dl>
 					<div>
 						<dt>Origin</dt>
-						<dd>{grain.origin}</dd>
+						<dd>{face.origin}</dd>
 					</div>
 					<div>
-						<dt>Grain</dt>
-						<dd>{grain.shape}</dd>
+						<dt>Year</dt>
+						<dd>{face.year}</dd>
 					</div>
 					<div>
-						<dt>Water</dt>
-						<dd>{grain.ratio}</dd>
+						<dt>Class</dt>
+						<dd>{face.cls}</dd>
 					</div>
 				</dl>
 			</Box>
@@ -487,9 +498,9 @@ function SelectDemo() {
 
 function BoxDemo() {
 	return (
-		<Box icon="/icons/bag.svg" className="bag-box">
-			<h4>Unbleached</h4>
-			<p>5 kg paper sack</p>
+		<Box icon="/icons/bowl.svg" className="bowl-box">
+			<h4>Ricebowl</h4>
+			<p>React component library</p>
 		</Box>
 	)
 }
@@ -498,21 +509,20 @@ function PanelDemo() {
 	return (
 		<div className="surface-card">
 			<Panel
-				className="pantry-box"
-				title="Pantry"
+				title="Storage"
 				titleExtra={
 					<Tooltip text="Add item" left>
-						<IconButton aria-label="Add item" className="tiny" onClick={() => toast('Added a sack', 'success')}>
+						<IconButton aria-label="Add item" className="tiny" onClick={() => toast('Added a folder', 'success')}>
 							<Ico name="plus" size={14} />
 						</IconButton>
 					</Tooltip>
 				}
 			>
-				<ul className="pantry">
+				<ul className="storage">
 					{[
-						['Koshihikari', '2.0 kg'],
-						['Basmati', '0.8 kg'],
-						['Arborio', '0.3 kg']
+						['Documents', '2.0 GB'],
+						['Photos', '0.8 GB'],
+						['Archive', '0.3 GB']
 					].map(([n, w]) => (
 						<li key={n}>
 							<span>{n}</span>
@@ -533,24 +543,23 @@ function LoadingDemo() {
 			</Box>
 			<Box className="load-box">
 				<p>
-					Steaming <Loading inline />
+					Loading <Loading inline />
 				</p>
 			</Box>
 		</div>
 	)
 }
 
-function NutritionModal() {
+function KeysModal() {
 	return (
 		<ModalBox className="modal">
-			<h2>Per 100 g, cooked</h2>
+			<h2>Keyboard</h2>
 			<table className="facts">
 				<tbody>
 					{[
-						['Energy', '130 kcal'],
-						['Carbohydrate', '28.2 g'],
-						['Protein', '2.7 g'],
-						['Fat', '0.3 g']
+						['Close', 'Esc'],
+						['Next control', 'Tab'],
+						['Previous control', 'Shift + Tab']
 					].map(([k, v]) => (
 						<tr key={k}>
 							<th>{k}</th>
@@ -567,39 +576,39 @@ function NutritionModal() {
 	)
 }
 
-function BowlModal() {
+function SettingsModal() {
 	return (
 		<ModalBox className="modal">
-			<h2>One bowl of rice</h2>
+			<h2>Settings</h2>
 			<p className="modal-copy">
 				Opening another modal from here replaces this one. <code>openPreviousModal()</code> brings it back.
 			</p>
 			<div className="row">
-				<Button onClick={() => setModal(<NutritionModal />)}>Nutrition</Button>
+				<Button onClick={() => setModal(<KeysModal />)}>Keyboard</Button>
 				<Button onClick={hideModal}>Close</Button>
 			</div>
 		</ModalBox>
 	)
 }
 
-function OrderModal() {
+function RenameModal() {
 	const [name, setName] = useState('')
 	return (
 		<ModalBox className="modal">
-			<h2>Reserve a sack</h2>
-			<form className="order" onSubmit={(e) => e.preventDefault()}>
-				<label htmlFor="order-name">Name</label>
-				<input id="order-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
+			<h2>Rename</h2>
+			<form className="rename-form" onSubmit={(e) => e.preventDefault()}>
+				<label htmlFor="rename-name">Name</label>
+				<input id="rename-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
 				<Button
 					type="submit"
 					disabled={!name.trim()}
 					onClick={async () => {
 						await sleep(1100)
 						hideModal()
-						toast(`Reserved for ${name.trim()}`, 'success')
+						toast(`Renamed to ${name.trim()}`, 'success')
 					}}
 				>
-					Reserve
+					Save
 				</Button>
 			</form>
 		</ModalBox>
@@ -609,28 +618,28 @@ function OrderModal() {
 function ModalDemo() {
 	return (
 		<div className="row">
-			<Button onClick={() => setModal(<BowlModal />, () => toast('Closed with Escape or the backdrop'))}>Open modal</Button>
-			<Button onClick={() => setModal(<OrderModal />)}>Open a form</Button>
+			<Button onClick={() => setModal(<SettingsModal />, () => toast('Closed with Escape or the backdrop'))}>Open modal</Button>
+			<Button onClick={() => setModal(<RenameModal />)}>Open a form</Button>
 		</div>
 	)
 }
 
 const TYPES: { type: ToastType; text: string }[] = [
-	{ type: 'default', text: 'Water is boiling.' },
-	{ type: 'info', text: 'Let it rest for 10 minutes.' },
-	{ type: 'success', text: 'Rice is ready.' },
-	{ type: 'warning', text: 'Running low on rice.' },
-	{ type: 'error', text: 'The rice cooker tripped a fuse.' }
+	{ type: 'default', text: 'Draft saved.' },
+	{ type: 'info', text: 'A new version is available.' },
+	{ type: 'success', text: 'Upload complete.' },
+	{ type: 'warning', text: 'Storage is almost full.' },
+	{ type: 'error', text: 'Connection lost.' }
 ]
 
-// As far ahead as setTimeout allows (~24 days); later dates overflow and fire at once
+// The furthest setTimeout can go (about 24 days). Any later and it fires straight away.
 const NEVER = new Date(Date.now() + 2 ** 31 - 1)
 
+// Outside the component so the choice survives switching tabs
 let toastCorner = 'right bottom'
 let toastsVisible = true
 
 function ToastDemo() {
-	// Module-level, so the choice survives switching items
 	const [corner, setCorner] = useState(toastCorner)
 	const [visible, setVisible] = useState(toastsVisible)
 
@@ -707,10 +716,16 @@ export const CATEGORIES: Category[] = [
 				['forceLoading', 'boolean']
 			],
 			code: `<Button onClick={async () => {
-  await cook('2 cups')
+  await save(draft)
 }}>
-  Cook rice
+  Save
 </Button>`,
+			notes: [
+				{ at: '.row:first-child .rb-button', i: 0, label: 'onClick: async', side: 'top' },
+				{ at: '.row:first-child .rb-button', i: 1, label: 'danger', side: 'top' },
+				{ at: '.row:first-child .rb-button', i: 2, label: 'disabled', side: 'top' },
+				{ at: '.row:last-child .rb-button', label: 'forceLoading', side: 'left' }
+			],
 			Demo: ButtonDemo
 		},
 		{
@@ -723,9 +738,15 @@ export const CATEGORIES: Category[] = [
 				['children', '<Icon />'],
 				['…', 'all Button props']
 			],
-			code: `<IconButton aria-label="Save" onClick={save}>
+			code: `<IconButton aria-label="Favourite" onClick={save}>
   <Icon src="/heart.svg" />
 </IconButton>`,
+			notes: [
+				{ at: '.rb-icon-button', i: 0, label: 'aria-pressed', side: 'top' },
+				{ at: '.rb-icon-button', i: 1, label: 'children: <Icon />', side: 'bottom' },
+				{ at: '.rb-icon-button', i: 2, label: 'onClick: async', side: 'top' },
+				{ at: '.rb-icon-button', i: 3, label: 'danger', side: 'bottom' }
+			],
 			Demo: IconButtonDemo
 		},
 		{
@@ -739,7 +760,11 @@ export const CATEGORIES: Category[] = [
 				['width', 'number'],
 				['height', 'number']
 			],
-			code: `<Icon src="/grain.svg" width={24} />`,
+			code: `<Icon src="/layers.svg" width={24} />`,
+			notes: [
+				{ at: '.rb-icon', i: 0, label: 'width={16}', side: 'top' },
+				{ at: '.rb-icon', i: 3, label: 'width={48}', side: 'top' }
+			],
 			Demo: IconDemo
 		}
 		]
@@ -760,7 +785,7 @@ export const CATEGORIES: Category[] = [
 				['forceShow', 'boolean'],
 				['forceHide', 'boolean']
 			],
-			code: `<Tooltip text="Rinse twice" right>
+			code: `<Tooltip text="Copy link" right>
   <Button>Hover me</Button>
 </Tooltip>`,
 			Demo: TooltipDemo
@@ -810,6 +835,10 @@ export const CATEGORIES: Category[] = [
 ]}>
   <Button>Export</Button>
 </Dropdown>`,
+			notes: [
+				{ at: '.rb-button', i: 0, label: 'items', side: 'top' },
+				{ at: '.rb-button', i: 1, label: 'above', side: 'bottom' }
+			],
 			Demo: DropdownDemo
 		},
 		{
@@ -823,11 +852,15 @@ export const CATEGORIES: Category[] = [
 				['above', 'boolean'],
 				['smartPositions', 'PopoverPosition[]']
 			],
-			code: `<Select options={grains.map((g) => ({
-  key: g.key,
-  name: g.name,
-  onPick: async () => setGrain(await load(g.key)),
+			code: `<Select options={fonts.map((f) => ({
+  key: f.key,
+  name: f.name,
+  onPick: async () => setFont(await load(f.key)),
 }))} />`,
+			notes: [
+				{ at: '.rb-select', label: 'options', side: 'left' },
+				{ at: '.face-card', label: 'onPick', side: 'right' }
+			],
 			Demo: SelectDemo
 		}
 		]
@@ -847,9 +880,13 @@ export const CATEGORIES: Category[] = [
 				['icon', 'string'],
 				['imageComponent', 'ComponentType']
 			],
-			code: `<Box icon="/bag.svg">
-  <h4>Unbleached</h4>
+			code: `<Box icon="/bowl.svg">
+  <h4>Ricebowl</h4>
 </Box>`,
+			notes: [
+				{ at: '.rb-box-icon', label: 'icon', side: 'right' },
+				{ at: 'h4', label: 'children', side: 'left' }
+			],
 			Demo: BoxDemo
 		},
 		{
@@ -862,9 +899,14 @@ export const CATEGORIES: Category[] = [
 				['title', 'string'],
 				['titleExtra', 'ReactNode']
 			],
-			code: `<Panel title="Pantry" titleExtra={<IconButton>…</IconButton>}>
+			code: `<Panel title="Storage" titleExtra={<IconButton>…</IconButton>}>
   …
 </Panel>`,
+			notes: [
+				{ at: '.rb-panel-title', label: 'title', side: 'left' },
+				{ at: '.rb-panel-title .rb-icon-button', label: 'titleExtra', side: 'right' },
+				{ at: '.storage', label: 'children', side: 'left' }
+			],
 			Demo: PanelDemo
 		},
 		{
@@ -882,7 +924,11 @@ export const CATEGORIES: Category[] = [
   <Loading />
 </Box>
 
-<p>Steaming <Loading inline /></p>`,
+<p>Loading <Loading inline /></p>`,
+			notes: [
+				{ at: '.rb-loading', i: 0, label: '<Loading />', side: 'top' },
+				{ at: '.rb-loading', i: 1, label: 'inline', side: 'top' }
+			],
 			Demo: LoadingDemo
 		}
 		]
@@ -905,10 +951,14 @@ export const CATEGORIES: Category[] = [
 			],
 			code: `setModal(
   <ModalBox>
-    <h2>One bowl of rice</h2>
+    <h2>Settings</h2>
   </ModalBox>,
   () => toast('Closed')
 )`,
+			notes: [
+				{ at: '.rb-button', i: 0, label: 'setModal(node, onClose)', side: 'top' },
+				{ at: '.rb-button', i: 1, label: 'setModal(node)', side: 'bottom' }
+			],
 			Demo: ModalDemo
 		},
 		{
@@ -925,8 +975,13 @@ export const CATEGORIES: Category[] = [
 			],
 			code: `import { toast } from 'ricebowl'
 
-toast('Rice is ready.', 'success')
+toast('Upload complete.', 'success')
 setToastLocation('left', 'top')`,
+			notes: [
+				{ at: '.toast-controls .row', i: 0, label: 'toast(text, type)', side: 'top' },
+				{ at: '.corners', label: 'setToastLocation', side: 'bottom' },
+				{ at: '.toast-gallery', label: '<ToastBox type>', side: 'top' }
+			],
 			Demo: ToastDemo
 		}
 		]
@@ -934,11 +989,7 @@ setToastLocation('left', 'top')`,
 ]
 
 export const SCREENS = [
-	{ id: 'buttons', name: 'Buttons' },
-	{ id: 'overlays', name: 'Overlays' },
-	{ id: 'menus', name: 'Menus' },
-	{ id: 'surfaces', name: 'Surfaces' },
-	{ id: 'global', name: 'Global' },
+	...CATEGORIES.map((c) => ({ id: c.id, name: c.title })),
 	{ id: 'theming', name: 'Theme' },
 	{ id: 'install', name: 'Install' }
-] as const
+]

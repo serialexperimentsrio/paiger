@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Box, Button, Select, modalActive, toast } from 'ricebowl'
 import pkg from '../../package.json'
-import { Frame, Glyph, Sigil } from './ornaments'
-import { CategoryScreens, GLYPHS, Plate, SCREENS, Screen, copy, sleep } from './sections'
+import { Frame, Glyph } from './ornaments'
+import { CategoryScreens, FACES, GLYPHS, Plate, SCREENS, Screen, copy, sleep } from './sections'
 import { PRESETS, applyTheme, toCss, type PresetName, type Rgba, type Theme } from './themes'
 
 const GITHUB = 'https://github.com/serialexperimentsrio/ricebowl'
@@ -23,16 +23,15 @@ export default function App() {
 	useEffect(() => applyTheme(theme), [theme])
 
 	useEffect(() => {
-		// Track the screen under the middle of the viewport, for the backdrop colour,
-		// the lockup and the chapter list. A zero-height band works for screens of
-		// any height, including ones taller than the viewport on phones.
+		// Whichever screen crosses the middle of the viewport is the active one.
+		// A zero-height line works even for screens taller than the viewport.
 		const spy = new IntersectionObserver(
 			(entries) => entries.forEach((e) => e.isIntersecting && setActive(e.target.id)),
 			{ rootMargin: '-50% 0px -50% 0px' }
 		)
 		document.querySelectorAll('main > section').forEach((el) => spy.observe(el))
 
-		// The browser tried to jump to #hash before React rendered the target
+		// The browser tried to jump to #hash before React rendered it, so try again
 		if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView({ behavior: 'instant' })
 		return () => spy.disconnect()
 	}, [])
@@ -126,7 +125,7 @@ const MENU: { label: string; href: string; external?: boolean }[] = [
 function Title() {
 	return (
 		<section id="top" className="screen title" aria-labelledby="title-heading">
-			<Sigil className="title-sigil" />
+			<div className="title-copy">
 			<h1 id="title-heading" className="wordmark">
 				<span className="kanji" aria-hidden="true">
 					茶碗
@@ -149,6 +148,7 @@ function Title() {
 					</a>
 				))}
 			</nav>
+			</div>
 		</section>
 	)
 }
@@ -254,7 +254,7 @@ function ThemeScreen({
 					</div>
 					<div className="row">
 						<Select
-							options={['Koshihikari', 'Basmati', 'Jasmine'].map((n, i) => ({ key: n, name: n, default: i === 0 }))}
+							options={FACES.slice(0, 3).map((f, i) => ({ key: f.key, name: f.name, default: i === 0 }))}
 						/>
 						<Box className="specimen-box">
 							<p>Bright text</p>
