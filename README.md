@@ -18,7 +18,7 @@ npm install ricebag
 Import the components and the stylesheet:
 
 ```ts
-import { Button, Modal, Tooltip, toast } from 'ricebag'
+import { Button, Tooltip, setModal, toast } from 'ricebag'
 import 'ricebag/styles.css'
 ```
 
@@ -57,6 +57,9 @@ All visual properties are driven by CSS custom properties. The defaults shipped 
   --rb-color-backdrop: rgba(0, 0, 0, 0.3);       /* modal overlay */
 
   --rb-border-width: 2px;
+  --rb-radius: 0px;             /* corner radius of every surface */
+  --rb-shadow: 0 0 #0000;       /* drop shadow of every surface */
+  --rb-font: inherit;           /* font of every component */
 
   --rb-z-popover: 1000;
   --rb-z-modal: 2000;
@@ -85,6 +88,53 @@ You can also scope overrides to a specific part of your app:
   --rb-color-main: #0d0d0d;
 }
 ```
+
+`--rb-shadow` must stay a valid shadow (use `0 0 #0000` rather than `none`), because the modal combines it with its border.
+
+## Styling components
+
+Tokens cover colours and shape. For anything else, write ordinary CSS against the stable class names below.
+
+All of ricebag's CSS lives in a cascade layer called `ricebag`, so your own unlayered CSS always wins. You don't need `!important` or extra specificity, and load order doesn't matter:
+
+```css
+.rb-button {
+  border-radius: 999px;
+  background: linear-gradient(#ffffff, #dde8f0);
+}
+
+.rb-button:hover {
+  background: linear-gradient(#eaf6fd, #a7d9f5);
+}
+
+.rb-button[data-loading] {
+  opacity: 0.6;
+}
+```
+
+If your own CSS is in layers too (Tailwind v4 is), declare ricebag's layer first so yours stay on top:
+
+```css
+@layer ricebag, theme, base, components, utilities;
+```
+
+| Class | Element | State attributes |
+|---|---|---|
+| `rb-box` | `Box`, and the surface of `Panel`, `ModalBox` and toasts | |
+| `rb-box-image`, `rb-box-icon` | `Box` background image and corner icon | |
+| `rb-button` | `Button` and `IconButton` | `data-loading`, `data-danger`, `disabled` |
+| `rb-icon-button` | `IconButton` | |
+| `rb-icon` | `Icon` | |
+| `rb-loading` | `Loading` | |
+| `rb-panel`, `rb-panel-title`, `rb-panel-box` | `Panel` wrapper, title row and body | |
+| `rb-popover`, `rb-popover-content` | `Popover` layer and its content wrapper | |
+| `rb-dropdown`, `rb-dropdown-item` | `Dropdown` menu and each item | `data-loading` on the item |
+| `rb-select`, `rb-select-arrow` | `Select` trigger and its arrow | `aria-expanded` |
+| `rb-tooltip`, `rb-tooltip-text` | `Tooltip` box and text | |
+| `rb-modal`, `rb-modal-content`, `rb-modal-backdrop` | `ModalBox` frame, its content, and the backdrop | `data-active` on the backdrop |
+| `rb-toast`, `rb-toast-container` | Each toast and the stack | `data-type`, `data-closing` |
+
+`Box`, `Button`, `IconButton`, `Icon`, `Loading`, `Panel`, `Select` and `ModalBox` also accept a `className`, which is added alongside these.
 
 ### Upgrading from 0.1.x
 

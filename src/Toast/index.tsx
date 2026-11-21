@@ -73,7 +73,7 @@ const ToastPortalContent = ({
 
 	return (
 		<div
-			className={style.toastProvider}
+			className={`rb-toast-container ${style.toastProvider}`}
 			role="status"
 			aria-live="polite"
 			aria-atomic="false"
@@ -112,6 +112,7 @@ const ToastPortalContent = ({
 export const setToastLocation = (x: XLocation, y: YLocation) => {
 	xLocation = x
 	yLocation = y
+	updatePortal()
 }
 
 export const setToastVisibility = (visible: boolean) => {
@@ -181,6 +182,9 @@ const handleRemoveToast = (id: string) => {
 }
 
 export const popToast = (content: string, type?: ToastType) => {
+	// No DOM during server rendering
+	if (typeof document === 'undefined') return
+
 	// Defer to the next frame so the DOM is ready to measure height.
 	requestAnimationFrame(() => {
 		// Render into a hidden container to measure the real height before

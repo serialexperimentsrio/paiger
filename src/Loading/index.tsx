@@ -16,10 +16,11 @@ export const Loading = forwardRef(
 		return (
 			<span
 				ref={ref}
-				className={`loadingAnimation ${styles.loadingAnimation} ${
+				className={`rb-loading loadingAnimation ${styles.loadingAnimation} ${
 					inline ? styles.inline : ''
 				} ${className || ''}`}
 				style={style}
+				role="status"
 				aria-busy="true"
 				aria-label="Loading"
 			>

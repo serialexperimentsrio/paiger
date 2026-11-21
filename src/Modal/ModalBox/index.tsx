@@ -118,11 +118,11 @@ export const ModalBox = ({
 		<Box
 			image={image}
 			icon={icon}
-			className={`outerModal ${style.outerModal}`}
+			className={`rb-modal outerModal ${style.outerModal}`}
 		>
 			<div
 				ref={divRef}
-				className={`${style.innerModal}${className ? ` ${className}` : ''}`}
+				className={`rb-modal-content ${style.innerModal}${className ? ` ${className}` : ''}`}
 				style={propStyle}
 			>
 				{children}

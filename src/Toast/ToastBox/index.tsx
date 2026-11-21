@@ -6,7 +6,7 @@ export type ToastType = 'default' | 'error' | 'success' | 'warning' | 'info'
 
 // How long a toast stays fully visible, then how long it takes to fade out
 export const DISPLAY_MS = 2500
-const FADE_MS = 5000
+const FADE_MS = 350
 // Hovering again after the fade has started gives the toast this long before fading again
 const RESUME_MS = 1500
 
@@ -18,26 +18,6 @@ export interface ToastBoxProps {
 	text: string
 	type?: ToastType
 	onRemove?: (id: string) => void
-}
-
-// Background and border per type, each tinting the theme's main/accent colours
-const TYPE_STYLES: Partial<Record<ToastType, React.CSSProperties>> = {
-	error: {
-		background: 'color-mix(in srgb, var(--rb-color-danger) 40%, var(--rb-color-main))',
-		borderColor: 'color-mix(in srgb, var(--rb-color-danger) 80%, var(--rb-color-accent))'
-	},
-	warning: {
-		background: 'color-mix(in srgb, var(--rb-color-warning) 40%, var(--rb-color-main))',
-		borderColor: 'color-mix(in srgb, var(--rb-color-warning) 80%, var(--rb-color-accent))'
-	},
-	success: {
-		background: 'color-mix(in srgb, var(--rb-color-success) 40%, var(--rb-color-main))',
-		borderColor: 'color-mix(in srgb, var(--rb-color-success) 80%, var(--rb-color-accent))'
-	},
-	info: {
-		background: 'color-mix(in srgb, var(--rb-color-accent) 40%, var(--rb-color-main))',
-		borderColor: 'var(--rb-color-accent)'
-	}
 }
 
 export default function ToastBox(props: ToastBoxProps) {
@@ -88,12 +68,16 @@ export default function ToastBox(props: ToastBoxProps) {
 			ref={boxRef}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
-			className={`${styles.toast} ${isClosing ? styles.closing : ''}`}
-			style={{
-				pointerEvents: isAnimationComplete ? 'none' : 'auto',
-				transition: isClosing ? `opacity ${FADE_MS}ms linear` : undefined,
-				...(props.type ? TYPE_STYLES[props.type] : undefined)
-			}}
+			className={`rb-toast ${styles.toast} ${isClosing ? styles.closing : ''}`}
+			// Type colours and the fade live in CSS, keyed by these attributes
+			data-type={props.type ?? 'default'}
+			data-closing={isClosing || undefined}
+			style={
+				{
+					pointerEvents: isAnimationComplete ? 'none' : 'auto',
+					'--rb-toast-fade': `${FADE_MS}ms`
+				} as React.CSSProperties
+			}
 		>
 			<p>{props.text}</p>
 		</Box>

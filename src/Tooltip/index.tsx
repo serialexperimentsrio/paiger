@@ -77,13 +77,6 @@ export function Tooltip({
 	}, [])
 
 	useEffect(() => {
-		setVisible(true)
-		setTimeout(() => {
-			setVisible(false)
-		}, 0)
-	}, [])
-
-	useEffect(() => {
 		tooltipSize.current = { width: 0, height: 0 }
 	}, [text])
 
@@ -151,7 +144,9 @@ export function Tooltip({
 
 		if (above) {
 			keyframes[0].top = `${Math.round(childRect.top + window.scrollY + 10)}px`
-			keyframes[1].top = `${Math.round(childRect.top - 40 + window.scrollY)}px`
+			keyframes[1].top = `${Math.round(
+				childRect.top - tooltipSize.current.height - 5 + window.scrollY
+			)}px`
 		}
 
 		if (left) {
@@ -233,8 +228,8 @@ export function Tooltip({
 	const tooltipContent =
 		(hovered || visible) &&
 		createPortal(
-			<div ref={boxRef} id={tooltipId} role="tooltip" className={style.tooltip}>
-				<div ref={innerRef} className={`${style.tooltipInner} ${isHorizontal ? style.horizontal : style.vertical}`}>
+			<div ref={boxRef} id={tooltipId} role="tooltip" className={`rb-tooltip ${style.tooltip}`}>
+				<div ref={innerRef} className={`rb-tooltip-text ${style.tooltipInner} ${isHorizontal ? style.horizontal : style.vertical}`}>
 					{text}
 				</div>
 			</div>,
@@ -244,22 +239,23 @@ export function Tooltip({
 	// safely clone child element with added props
 	const clone = React.cloneElement(children, {
 		...children.props,
-		'aria-describedby': tooltipId,
+		// only reference the tooltip while it exists
+		'aria-describedby':
+			[children.props['aria-describedby'], (hovered || visible || forceShow) && tooltipId]
+				.filter(Boolean)
+				.join(' ') || undefined,
 
 		// merge refs
 		ref: (node: HTMLElement | null) => {
 			// update our ref
 			childRef.current = node
 
-			// typescript don't let us access ref directly from ReactElement
-			// so we gotta be tricky, cast to unknown first then to RefObject
 			type RefType =
 				| ((instance: HTMLElement | null) => void)
 				| { current: HTMLElement | null }
 				| null
-			const originalRef = React.isValidElement(children)
-				? (children as unknown as { ref?: RefType }).ref
-				: null
+			// React 19 keeps the child's own ref in props.ref (element.ref is gone)
+			const originalRef = (children.props as { ref?: RefType }).ref
 			if (!originalRef) return
 
 			// handle both function and object refs

@@ -1,42 +1,44 @@
-.box {
-	background: var(--rb-color-main);
-	border: var(--rb-border-width) solid var(--rb-color-accent);
-	padding: 20px;
-	position: relative;
-	overflow: hidden;
-	transition: background var(--rb-transition-base);
-}
+/* Inside a cascade layer, so any unlayered app CSS wins regardless of specificity or load order */
+@layer ricebag {
+	.box {
+		background: var(--rb-color-main);
+		border: var(--rb-border-width) solid var(--rb-color-accent);
+		border-radius: var(--rb-radius);
+		box-shadow: var(--rb-shadow);
+		font-family: var(--rb-font);
+		padding: 20px;
+		position: relative;
+		overflow: hidden;
+		transition: background var(--rb-transition-base);
+	}
 
-.box * {
-	position: relative;
-	/* Keep content above the background image and icon */
-	z-index: 100;
-}
+	/* :where() keeps this at zero specificity, so children can set their own position */
+	:where(.box) > * {
+		position: relative;
+		/* Keep content above the background image and icon */
+		z-index: 100;
+	}
 
-.box .loadingAnimation {
-	position: absolute;
-}
+	.iconbg {
+		position: absolute;
+		opacity: 0.2;
+		transform: translateY(-50%);
+		right: -10%;
+		top: 40%;
+		width: 90%;
+		pointer-events: none;
+	}
 
-.iconbg {
-	position: absolute;
-	opacity: 0.2;
-	transform: translateY(-50%);
-	right: -10%;
-	top: 40%;
-	width: 90%;
-pointer-events: none;
+	.bg {
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		width: 100%;
+		min-height: 100%;
+		z-index: 2;
+		object-fit: cover;
+		opacity: 0.05;
+		pointer-events: none;
+		position: absolute;
+	}
 }
-
-.bg {
-	left: 50%;
-	top: 50%;
-	transform: translate(-50%, -50%);
-	width: 100%;
-	min-height: 100%;
-	z-index: 2;
-	object-fit: cover;
-	opacity: 0.05;
-	pointer-events: none;
-	position: absolute;
-}
-

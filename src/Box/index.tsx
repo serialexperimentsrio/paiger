@@ -16,15 +16,6 @@ type BoxProps = {
 	imageComponent?: React.ComponentType<ImageComponentProps>
 } & HTMLAttributes<HTMLDivElement>
 
-const defaultImageStyle: React.CSSProperties = {
-	position: 'absolute',
-	top: 0,
-	left: 0,
-	width: '100%',
-	height: '100%',
-	objectFit: 'cover',
-}
-
 export const Box = forwardRef(
 	(
 		{ image, icon, className, children, imageComponent, ...rest }: BoxProps,
@@ -36,24 +27,25 @@ export const Box = forwardRef(
 			<div
 				{...rest}
 				ref={ref}
-				className={`${style.box} ${className || ''}`}
+				className={`rb-box ${style.box} ${className || ''}`}
 			>
+				{/* Positioned by CSS only, so apps can restyle them */}
 				{image && (
 					<Img
 						src={image}
-						className={`boxbg ${style.bg}`}
-						alt="Background decoration"
+						className={`rb-box-image boxbg ${style.bg}`}
+						alt=""
+						aria-hidden="true"
 						fill={imageComponent != null ? true : undefined}
-						style={imageComponent == null ? defaultImageStyle : undefined}
 					/>
 				)}
 				{icon && (
 					<Img
 						src={icon}
-						className={`boxiconbg ${style.iconbg}`}
-						alt="Icon background decoration"
+						className={`rb-box-icon boxiconbg ${style.iconbg}`}
+						alt=""
+						aria-hidden="true"
 						fill={imageComponent != null ? true : undefined}
-						style={imageComponent == null ? defaultImageStyle : undefined}
 					/>
 				)}
 				{children}

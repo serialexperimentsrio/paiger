@@ -18,13 +18,13 @@ export const Icon = forwardRef(
 				{...rest}
 				draggable={false}
 				ref={ref}
-				alt={rest.alt || 'Icon'}
+				alt={rest.alt ?? ''}
 				style={{
 					width: width ?? height ?? 16,
 					height: height ?? width ?? 16,
 					...rest.style
 				}}
-				className={`${rest.className} ${style.icon}`}
+				className={`rb-icon ${style.icon}${rest.className ? ` ${rest.className}` : ''}`}
 			/>
 		)
 	}

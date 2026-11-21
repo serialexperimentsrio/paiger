@@ -22,7 +22,7 @@ export function Select({
 	className?: string
 }) {
 	const [optionName, setOptionName] = useState(
-		options.find((o) => o.default)?.name || options[0].name
+		options.find((o) => o.default)?.name ?? options[0]?.name ?? ''
 	)
 	const [isOpen, setIsOpen] = useState(false)
 
@@ -51,11 +51,11 @@ export function Select({
 						e.currentTarget.click()
 					}
 				}}
-				className={`${style.selectTrigger} ${className}`}
+				className={`rb-select ${style.selectTrigger}${className ? ` ${className}` : ''}`}
 				style={customStyle}
 			>
 				<span>{optionName}</span>
-				<span className={style.arrow} aria-hidden="true">^</span>
+				<span className={`rb-select-arrow ${style.arrow}`} aria-hidden="true">^</span>
 			</div>
 		</Dropdown>
 	)

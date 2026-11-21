@@ -1,26 +1,32 @@
 /* Default theme, bundled into ricebag/styles.css. :where() gives these zero
    specificity, so an app's own :root values always win, even though the JS
    bundle also injects this CSS at the end of <head> at runtime. */
-:where(:root) {
-	/* Colors */
-	--rb-color-main: #141414; /* component backgrounds */
-	--rb-color-accent: #444444; /* borders, hover states */
-	--rb-color-bright: #f0f0f0; /* primary text */
-	--rb-color-dim: #888888; /* muted/disabled text */
-	--rb-color-danger: rgba(255, 133, 133, 0.16); /* danger tint */
-	--rb-color-warning: rgba(255, 200, 0, 0.16); /* warning tint */
-	--rb-color-success: rgba(0, 200, 100, 0.16); /* success tint */
-	--rb-color-backdrop: rgba(0, 0, 0, 0.3); /* modal overlay */
+/* Inside a cascade layer, so any unlayered app CSS wins regardless of specificity or load order */
+@layer ricebag {
+	:where(:root) {
+		/* Colors */
+		--rb-color-main: #141414; /* component backgrounds */
+		--rb-color-accent: #444444; /* borders, hover states */
+		--rb-color-bright: #f0f0f0; /* primary text */
+		--rb-color-dim: #888888; /* muted/disabled text */
+		--rb-color-danger: rgba(255, 133, 133, 0.16); /* danger tint */
+		--rb-color-warning: rgba(255, 200, 0, 0.16); /* warning tint */
+		--rb-color-success: rgba(0, 200, 100, 0.16); /* success tint */
+		--rb-color-backdrop: rgba(0, 0, 0, 0.3); /* modal overlay */
 
-	--rb-border-width: 2px;
+		--rb-border-width: 2px;
+		--rb-radius: 0px; /* corner radius of every surface */
+		--rb-shadow: 0 0 #0000; /* drop shadow of every surface; keep it a valid shadow, not none */
+		--rb-font: inherit; /* font of every component */
 
-	/* Z-index layers */
-	--rb-z-popover: 1000;
-	--rb-z-modal: 2000;
-	--rb-z-tooltip: 3000;
-	--rb-z-toast: 4000;
+		/* Z-index layers */
+		--rb-z-popover: 1000;
+		--rb-z-modal: 2000;
+		--rb-z-tooltip: 3000;
+		--rb-z-toast: 4000;
 
-	/* Transitions */
-	--rb-transition-fast: 0.12s ease;
-	--rb-transition-base: 0.24s ease;
+		/* Transitions */
+		--rb-transition-fast: 0.12s ease;
+		--rb-transition-base: 0.24s ease;
+	}
 }

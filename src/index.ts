@@ -9,6 +9,7 @@ export { IconButton } from './IconButton'
 export { Loading } from './Loading'
 export { Panel } from './Panel'
 export { Popover } from './Popover'
+export type { PopoverPosition } from './Popover/position'
 export { Select } from './Select'
 export { Tooltip } from './Tooltip'
 
@@ -18,4 +19,4 @@ export type { ModalBoxProps, ModalBoxComponent } from './Modal/ModalBox'
 
 export { popToast as toast, setToastLocation, setToastVisibility } from './Toast'
 export { default as ToastBox } from './Toast/ToastBox'
-export type { ToastBoxProps } from './Toast/ToastBox'
+export type { ToastBoxProps, ToastType } from './Toast/ToastBox'

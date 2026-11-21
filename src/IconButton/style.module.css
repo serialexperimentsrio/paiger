@@ -1,4 +1,7 @@
-.button {
-	padding: 5px 8px;
-	height: 36px;
+/* Inside a cascade layer, so any unlayered app CSS wins regardless of specificity or load order */
+@layer ricebag {
+	.button {
+		padding: 5px 8px;
+		height: 36px;
+	}
 }

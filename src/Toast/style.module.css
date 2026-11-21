@@ -1,7 +1,10 @@
-.toastProvider {
-	position: fixed;
-	display: inline-block;
-	z-index: var(--rb-z-toast);
-	transition: top 0.5s cubic-bezier(0.22, 1, 0.36, 1), bottom 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-	pointer-events: none;
+/* Inside a cascade layer, so any unlayered app CSS wins regardless of specificity or load order */
+@layer ricebag {
+	.toastProvider {
+		position: fixed;
+		display: inline-block;
+		z-index: var(--rb-z-toast);
+		transition: top 0.5s cubic-bezier(0.22, 1, 0.36, 1), bottom 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+		pointer-events: none;
+	}
 }

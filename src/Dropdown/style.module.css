@@ -1,29 +1,36 @@
-.dropdown {
-	width: 100%;
-	box-sizing: border-box;
-	background: var(--rb-color-main);
-	border: var(--rb-border-width) solid var(--rb-color-accent);
-}
+/* Inside a cascade layer, so any unlayered app CSS wins regardless of specificity or load order */
+@layer ricebag {
+	.dropdown {
+		width: 100%;
+		box-sizing: border-box;
+		overflow: hidden;
+		background: var(--rb-color-main);
+		border: var(--rb-border-width) solid var(--rb-color-accent);
+		border-radius: var(--rb-radius);
+		box-shadow: var(--rb-shadow);
+		font-family: var(--rb-font);
+	}
 
-.dropdown > div {
-	cursor: pointer;
-	overflow: hidden;
-	white-space: nowrap;
-	position: relative;
-	padding: 13px 15px;
-	border-bottom: var(--rb-border-width) solid var(--rb-color-accent);
-	transition: background var(--rb-transition-fast), color var(--rb-transition-base), opacity var(--rb-transition-base);
-}
+	.dropdown > div {
+		cursor: pointer;
+		overflow: hidden;
+		white-space: nowrap;
+		position: relative;
+		padding: 13px 15px;
+		border-bottom: var(--rb-border-width) solid var(--rb-color-accent);
+		transition: background var(--rb-transition-fast), color var(--rb-transition-base), opacity var(--rb-transition-base);
+	}
 
-.dropdown > div > span {
-	transition: color var(--rb-transition-base), opacity var(--rb-transition-base);
-}
+	.dropdown > div > span {
+		transition: color var(--rb-transition-base), opacity var(--rb-transition-base);
+	}
 
-.dropdown > div:hover,
-.dropdown > div:focus-visible {
-	background: var(--rb-color-accent);
-}
+	.dropdown > div:hover,
+	.dropdown > div:focus-visible {
+		background: var(--rb-color-accent);
+	}
 
-.dropdown > div:last-child {
-	border: none;
+	.dropdown > div:last-child {
+		border: none;
+	}
 }

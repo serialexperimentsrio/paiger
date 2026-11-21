@@ -1,20 +1,54 @@
-.toast {
-	display: block;
-	white-space: pre-wrap;
-	width: 300px;
-	margin: 10px;
-	top: 0px;
-	position: relative;
-	opacity: 1;
-	pointer-events: auto;
-	word-wrap: break-word;
-}
+/* Inside a cascade layer, so any unlayered app CSS wins regardless of specificity or load order */
+@layer ricebag {
+	.toast {
+		display: block;
+		white-space: pre-wrap;
+		width: 300px;
+		margin: 10px;
+		top: 0px;
+		position: relative;
+		opacity: 1;
+		pointer-events: auto;
+		word-wrap: break-word;
+	}
 
-.toast p {
-	margin: 0;
-}
+	.toast p {
+		margin: 0;
+	}
 
-/* The fade duration is set inline from FADE_MS in index.tsx */
-.toast.closing {
-	opacity: 0;
+	/* --rb-toast-fade is set inline from FADE_MS, which also times the removal */
+	.toast.closing {
+		opacity: 0;
+		transform: scale(0.96);
+		transition:
+			opacity var(--rb-toast-fade) cubic-bezier(0.4, 0, 1, 1),
+			transform var(--rb-toast-fade) cubic-bezier(0.4, 0, 1, 1);
+	}
+
+	/* Each type tints the theme's main and accent colours */
+	.toast[data-type='error'] {
+		background: color-mix(in srgb, var(--rb-color-danger) 40%, var(--rb-color-main));
+		border-color: color-mix(in srgb, var(--rb-color-danger) 80%, var(--rb-color-accent));
+	}
+
+	.toast[data-type='warning'] {
+		background: color-mix(in srgb, var(--rb-color-warning) 40%, var(--rb-color-main));
+		border-color: color-mix(in srgb, var(--rb-color-warning) 80%, var(--rb-color-accent));
+	}
+
+	.toast[data-type='success'] {
+		background: color-mix(in srgb, var(--rb-color-success) 40%, var(--rb-color-main));
+		border-color: color-mix(in srgb, var(--rb-color-success) 80%, var(--rb-color-accent));
+	}
+
+	.toast[data-type='info'] {
+		background: color-mix(in srgb, var(--rb-color-accent) 40%, var(--rb-color-main));
+		border-color: var(--rb-color-accent);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.toast.closing {
+			transform: none;
+		}
+	}
 }

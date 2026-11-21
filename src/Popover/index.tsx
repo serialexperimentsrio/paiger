@@ -106,7 +106,7 @@ function PopoverContent({
 	}, [])
 
 	return (
-		<div ref={actualContentRef} className={style.popoverContent}>
+		<div ref={actualContentRef} className={`rb-popover-content ${style.popoverContent}`}>
 			{children}
 		</div>
 	)
@@ -226,6 +226,8 @@ export function Popover({
 			popoverRef.current.showPopover()
 
 			await new Promise((resolve) => requestAnimationFrame(resolve))
+			// The popover can unmount while we wait a frame
+			if (!popoverRef.current) return
 			const constrainedRect = popoverRef.current.getBoundingClientRect()
 			finalSize =
 				constrainedRect.width > 0 && constrainedRect.height > 0
@@ -241,11 +243,7 @@ export function Popover({
 			// starts from exactly the right place.
 			Object.assign(popoverRef.current.style, {
 				...(finalPosition as React.CSSProperties),
-				visibility: 'hidden !important',
-				opacity: '0 !important',
-				contain: 'layout style',
-				animation: 'none !important',
-				transition: 'none !important'
+				contain: 'layout style'
 			})
 
 			popoverRef.current.hidePopover()
@@ -260,6 +258,7 @@ export function Popover({
 		setIsMeasuring(false)
 
 		await new Promise((resolve) => requestAnimationFrame(resolve))
+		if (!popoverRef.current) return
 
 		// Set the initial animation state (height: 0) before calling showPopover
 		// so the entrance animation has a defined start frame.
@@ -267,9 +266,7 @@ export function Popover({
 			...(finalPosition as React.CSSProperties),
 			height: '0px',
 			opacity: '0',
-			overflow: 'hidden',
-			animation: 'none !important',
-			transition: 'none !important'
+			overflow: 'hidden'
 		})
 
 		setIsVisible(true)
@@ -407,7 +404,7 @@ export function Popover({
 				ref={popoverRef}
 				popover="manual"
 				id={popoverId}
-				className={style.popover}
+				className={`rb-popover ${style.popover}`}
 				style={{ ...positionStyle, ...customStyle } as React.CSSProperties}
 			>
 				<PopoverContent

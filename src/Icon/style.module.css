@@ -1,3 +1,6 @@
-.icon {
-	user-select: none;
+/* Inside a cascade layer, so any unlayered app CSS wins regardless of specificity or load order */
+@layer ricebag {
+	.icon {
+		user-select: none;
+	}
 }

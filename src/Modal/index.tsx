@@ -124,6 +124,12 @@ export const hideModal = () => {
 
 let portalUpdateFn: ((value: Record<string, never>) => void) | null = null
 
+// Escape and backdrop clicks both count as the user dismissing the modal
+const dismissModal = () => {
+	onCloseCallback?.()
+	hideModal()
+}
+
 const ModalPortal = () => {
 	const [, forceUpdate] = useState({})
 	const dialogRef = useRef<HTMLDivElement>(null)
@@ -138,7 +144,7 @@ const ModalPortal = () => {
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
-			if (e.key === 'Escape' && modalActive) hideModal()
+			if (e.key === 'Escape' && modalActive) dismissModal()
 
 			// Focus trap: keep Tab cycling inside the dialog so keyboard users
 			// can't accidentally navigate behind the modal.
@@ -188,8 +194,9 @@ const ModalPortal = () => {
 	return (
 		<>
 			<div
-				onClick={() => { onCloseCallback?.(); hideModal() }}
-				className={`${style.modalBackdrop} ${modalActive ? style.active : ''}`}
+				onClick={dismissModal}
+				className={`rb-modal-backdrop ${style.modalBackdrop} ${modalActive ? style.active : ''}`}
+				data-active={modalActive || undefined}
 			/>
 			<div
 				ref={dialogRef}

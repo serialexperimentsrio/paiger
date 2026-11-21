@@ -49,11 +49,13 @@ function DropdownContent({
 	}
 
 	return (
-		<div className={style.dropdown} role="listbox" onKeyDown={handleKeyDown}>
+		<div className={`rb-dropdown ${style.dropdown}`} role="listbox" onKeyDown={handleKeyDown}>
 			{items.map((item, index) => (
 				<div
 					key={item.key}
 					ref={(el) => { itemRefs.current[index] = el }}
+					className="rb-dropdown-item"
+					data-loading={loadingIndex === index || undefined}
 					role="option"
 					aria-selected={false}
 					aria-busy={loadingIndex === index}

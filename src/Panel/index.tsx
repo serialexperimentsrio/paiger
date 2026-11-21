@@ -6,6 +6,7 @@ export function Panel({
 	title,
 	children,
 	titleExtra,
+	className,
 	...rest
 }: React.HTMLAttributes<HTMLDivElement> & {
 	title: string
@@ -13,12 +14,12 @@ export function Panel({
 	children: ReactNode
 }) {
 	return (
-		<div className={style.panel}>
-			<div className={style.title}>
+		<div className={`rb-panel ${style.panel}`}>
+			<div className={`rb-panel-title ${style.title}`}>
 				<span>{title}</span>
 				{titleExtra}
 			</div>
-			<Box className={style.box} {...rest}>
+			<Box {...rest} className={`rb-panel-box ${style.box}${className ? ` ${className}` : ''}`}>
 				{children}
 			</Box>
 		</div>

@@ -20,7 +20,15 @@ export const Button = forwardRef(
 			setLoading(forceLoading)
 		}, [forceLoading])
 
+		const isLoading = loading || forceLoading
+
 		const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+			// Not natively disabled while loading (that would drop keyboard focus),
+			// so block repeat activations here.
+			if (isLoading) {
+				e.preventDefault()
+				return
+			}
 			if (onClick == null) return
 			e.preventDefault()
 			setLoading(true)
@@ -31,20 +39,24 @@ export const Button = forwardRef(
 			}
 		}
 
-		const isDisabled = disabled || loading || forceLoading
-
 		return (
 			<button
 				{...rest}
 				ref={ref}
 				onClick={handleClick}
-				disabled={isDisabled}
-				className={`
-					${(loading || forceLoading) && style.loading}
-					${danger && style.danger}
-					${rest.className}
-					${style.button}
-				`}
+				disabled={disabled}
+				aria-busy={isLoading || undefined}
+				data-loading={isLoading || undefined}
+				data-danger={danger || undefined}
+				className={[
+					'rb-button',
+					isLoading && style.loading,
+					danger && style.danger,
+					rest.className,
+					style.button
+				]
+					.filter(Boolean)
+					.join(' ')}
 			/>
 		)
 	}

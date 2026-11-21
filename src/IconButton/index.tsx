@@ -11,7 +11,7 @@ export const IconButton = (
 	return (
 		<Button
 			{...props}
-			className={`${style.button} ${props.className ?? ''}`}
+			className={`rb-icon-button ${style.button} ${props.className ?? ''}`}
 		>
 			{props.children}
 		</Button>
