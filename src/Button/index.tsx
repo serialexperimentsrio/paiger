@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ForwardedRef } from 'react'
-import { forwardRef, useEffect, useState } from 'react'
+import { forwardRef, useState } from 'react'
 import style from './style.module.css'
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -14,12 +14,8 @@ export const Button = forwardRef(
 		{ onClick, forceLoading, danger, disabled, ...rest }: Props,
 		ref: ForwardedRef<HTMLButtonElement>
 	) => {
-		const [loading, setLoading] = useState(forceLoading)
-
-		useEffect(() => {
-			setLoading(forceLoading)
-		}, [forceLoading])
-
+		// Only tracks our own async onClick; forceLoading is read straight from props
+		const [loading, setLoading] = useState(false)
 		const isLoading = loading || forceLoading
 
 		const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {

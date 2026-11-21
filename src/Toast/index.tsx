@@ -180,6 +180,8 @@ const handleRemoveToast = (id: string) => {
 export const popToast = (content: string, type?: ToastType) => {
 	// Nothing to do on the server
 	if (typeof document === 'undefined') return
+	// The toast layer is only created once the first toast is shown
+	initToastPortal()
 
 	requestAnimationFrame(() => {
 		// Render it off-screen first to find out how tall it is
@@ -225,4 +227,3 @@ export const popToast = (content: string, type?: ToastType) => {
 	})
 }
 
-initToastPortal()

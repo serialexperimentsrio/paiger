@@ -17,7 +17,7 @@ const sharedOptions = {
   plugins: [
     cssModulesPlugin({
       force: true,
-      inject: true,
+      inject: false,
       localsConvention: 'camelCaseOnly',
     }),
   ],

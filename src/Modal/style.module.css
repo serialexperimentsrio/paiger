@@ -15,4 +15,11 @@
 		background: var(--rb-color-backdrop);
 		pointer-events: all;
 	}
+
+	/* The first modal mounts the backdrop already active, so fade in from clear */
+	@starting-style {
+		.modalBackdrop.active {
+			background: transparent;
+		}
+	}
 }

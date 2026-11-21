@@ -20,6 +20,32 @@ type TooltipProps = {
 	forceHide?: boolean
 }
 
+// Every tooltip shares one scroll listener, which tells them when scrolling
+// starts and when it has stopped. Capture, so scrolling containers count too.
+const scrollWatchers = new Set<(scrolling: boolean) => void>()
+let settleTimer: ReturnType<typeof setTimeout> | undefined
+
+const onScroll = () => {
+	if (settleTimer === undefined) scrollWatchers.forEach((watch) => watch(true))
+	clearTimeout(settleTimer)
+	settleTimer = setTimeout(() => {
+		settleTimer = undefined
+		scrollWatchers.forEach((watch) => watch(false))
+	}, 150)
+}
+
+const watchScroll = (watch: (scrolling: boolean) => void) => {
+	if (scrollWatchers.size === 0) window.addEventListener('scroll', onScroll, { capture: true, passive: true })
+	scrollWatchers.add(watch)
+	return () => {
+		scrollWatchers.delete(watch)
+		if (scrollWatchers.size > 0) return
+		window.removeEventListener('scroll', onScroll, { capture: true })
+		clearTimeout(settleTimer)
+		settleTimer = undefined
+	}
+}
+
 export function Tooltip({
 	text,
 	children,
@@ -57,28 +83,22 @@ export function Tooltip({
 	const [settled, setSettled] = useState(0)
 
 	// Hide while the page scrolls (the trigger moves away from the tooltip), and
-	// bring it back once scrolling stops if the mouse is still on the trigger.
-	// Capture so scrolling containers count too.
-	useEffect(() => {
-		let settleTimer: ReturnType<typeof setTimeout>
-		const onScroll = () => {
-			scrollingRef.current = true
-			animationRef.current?.cancel()
-			setHovered(false)
-			setVisible(false)
-			clearTimeout(settleTimer)
-			settleTimer = setTimeout(() => {
-				scrollingRef.current = false
-				if (childRef.current?.matches(':hover')) setHovered(true)
-				if (forceShowRef.current) setSettled((n) => n + 1)
-			}, 150)
-		}
-		window.addEventListener('scroll', onScroll, { capture: true, passive: true })
-		return () => {
-			window.removeEventListener('scroll', onScroll, { capture: true })
-			clearTimeout(settleTimer)
-		}
-	}, [])
+	// bring it back once scrolling stops if the mouse is still on the trigger
+	useEffect(
+		() =>
+			watchScroll((scrolling) => {
+				scrollingRef.current = scrolling
+				if (scrolling) {
+					animationRef.current?.cancel()
+					setHovered(false)
+					setVisible(false)
+				} else {
+					if (childRef.current?.matches(':hover')) setHovered(true)
+					if (forceShowRef.current) setSettled((n) => n + 1)
+				}
+			}),
+		[]
+	)
 
 	useEffect(() => {
 		tooltipSize.current = { width: 0, height: 0 }

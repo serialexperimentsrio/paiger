@@ -1,7 +1,6 @@
 /* The default theme. All of ricebowl's CSS sits in the `ricebowl` layer, so
    any CSS of yours outside a layer wins, whatever its specificity or order.
-   :where() keeps these at zero specificity on top of that, because the JS
-   bundle injects this at the end of <head>. */
+   :where() keeps these at zero specificity on top of that. */
 @layer ricebowl {
 	:where(:root) {
 		/* Colors */

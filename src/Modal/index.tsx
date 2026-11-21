@@ -24,6 +24,7 @@ export const registerCloseAnimation = (
 }
 
 let isTransitioningBetweenModals = false
+let modalCount = 0
 export const isModalTransitioning = () => isTransitioningBetweenModals
 
 const clearModalTimeout = () => {
@@ -38,13 +39,13 @@ const clearModalTimeout = () => {
 // same component is shown twice in a row
 const addKeyToModalContent = (content: React.ReactNode): React.ReactNode => {
 	if (React.isValidElement(content)) {
-		const uniqueKey = `modal-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-		return React.cloneElement(content, { key: uniqueKey })
+		return React.cloneElement(content, { key: `modal-${++modalCount}` })
 	}
 	return content
 }
 
 export const setModal = (content: React.ReactNode, onClose?: () => void) => {
+	initModalPortal()
 	if (currentModal != null) {
 		previousModal = currentModal
 		previousOnClose = onCloseCallback
@@ -229,4 +230,3 @@ export const openPreviousModal = () => {
 	previousOnClose = undefined
 }
 
-initModalPortal()

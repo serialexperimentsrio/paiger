@@ -20,7 +20,7 @@ import { Button, Tooltip, setModal, toast } from 'ricebowl'
 import 'ricebowl/styles.css'
 ```
 
-The stylesheet includes both component styles and default theme values. Import it once at the root of your app.
+The stylesheet includes both component styles and default theme values. Import it once at the root of your app. The components don't inject any CSS themselves, so without it they're unstyled.
 
 ## Components
 
@@ -110,11 +110,13 @@ All of ricebowl's CSS lives in a cascade layer called `ricebowl`, so your own un
 }
 ```
 
-If your own CSS is in layers too (Tailwind v4 is), declare ricebowl's layer first so yours stay on top:
+If your own CSS is in layers too (Tailwind v4 is), say where ricebowl goes. Put it after any reset, or the reset wipes its padding and borders, and before the layers that should be able to restyle it:
 
 ```css
-@layer ricebowl, theme, base, components, utilities;
+@layer theme, base, ricebowl, components, utilities;
 ```
+
+Layer order is fixed by whichever stylesheet names a layer first, so this line has to load before `ricebowl/styles.css`. With Tailwind, put it at the top of your main CSS file and import that file before ricebowl's.
 
 | Class | Element | State attributes |
 |---|---|---|
@@ -135,6 +137,10 @@ If your own CSS is in layers too (Tailwind v4 is), declare ricebowl's layer firs
 `Box`, `Button`, `IconButton`, `Icon`, `Loading`, `Panel`, `Select` and `ModalBox` also accept a `className`, which is added alongside these.
 
 ## Upgrading
+
+### From 0.3.x
+
+0.4.0 stops injecting the component CSS at runtime; it only comes from `ricebowl/styles.css` now. If you already import that (as the setup above says), there's nothing to do. The unprefixed `boxbg`, `boxiconbg`, `loadingAnimation` and `outerModal` classes are gone; use the `rb-*` classes instead.
 
 ### From 0.2.x
 
