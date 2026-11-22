@@ -5,6 +5,8 @@
 
 **ricebowl** is a React component library with custom property theming.
 
+See every component in the [demo](https://serialexperimentsrio.github.io/ricebowl/).
+
 ## Installation
 
 ```bash

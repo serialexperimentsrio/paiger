@@ -4,6 +4,8 @@ import path from 'path'
 
 export default defineConfig({
 	plugins: [react()],
+	// Relative paths, so the build works under any subpath (GitHub Pages serves it at /ricebowl/)
+	base: './',
 	resolve: {
 		// Use the library source directly, so edits to ../src hot-reload here
 		alias: { ricebowl: path.resolve(__dirname, '../src/index.ts') },

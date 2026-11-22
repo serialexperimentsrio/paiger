@@ -26,7 +26,7 @@ import { Glyph } from './ornaments'
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 export const Ico = ({ name, size = 18 }: { name: string; size?: number }) => (
-	<Icon src={`/icons/${name}.svg`} width={size} className="ico" alt="" />
+	<Icon src={`icons/${name}.svg`} width={size} className="ico" alt="" />
 )
 
 export const copy = async (text: string, label = 'Copied to clipboard') => {
@@ -498,7 +498,7 @@ function SelectDemo() {
 
 function BoxDemo() {
 	return (
-		<Box icon="/icons/bowl.svg" className="bowl-box">
+		<Box icon="icons/bowl.svg" className="bowl-box">
 			<h4>Ricebowl</h4>
 			<p>React component library</p>
 		</Box>
