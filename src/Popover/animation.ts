@@ -6,7 +6,7 @@ export const createAnimationKeyframes = (
 	height: number,
 	offset: number,
 	isOpening: boolean,
-	matchTriggerWidth: boolean = true
+	matchTriggerWidth: boolean
 ): Keyframe[] => {
 	const baseTransform = TRANSFORMS[position]
 	// Centred popovers rely on translateX(-50%), so every keyframe needs it too

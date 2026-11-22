@@ -3,7 +3,6 @@ import cssModulesPlugin from 'esbuild-css-modules-plugin'
 import { execSync } from 'child_process'
 import { rmSync } from 'fs'
 
-// Clean dist
 rmSync('dist', { recursive: true, force: true })
 
 const sharedOptions = {
@@ -13,7 +12,6 @@ const sharedOptions = {
   sourcemap: true,
   target: 'es2020',
   jsx: 'automatic',
-  metafile: true,
   plugins: [
     cssModulesPlugin({
       force: true,
@@ -36,7 +34,7 @@ await Promise.all([
   }),
 ])
 
-// Generate type declarations via tsc (skip CSS module type errors)
+// esbuild doesn't write types, so tsc does that part
 execSync('npx tsc --emitDeclarationOnly --declaration --declarationMap --outDir dist --skipLibCheck', {
   stdio: 'inherit',
 })

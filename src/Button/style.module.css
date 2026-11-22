@@ -26,7 +26,7 @@
 	}
 
 	.button:hover:not(:disabled):not(.loading) {
-		background: var(--rb-color-accent);
+		background-color: var(--rb-color-accent);
 	}
 
 	.button:active:not(:disabled):not(.loading) {
@@ -87,17 +87,9 @@
 		animation-delay: 1s;
 	}
 
-	/* The danger colour is see-through, so paint it as a gradient layer over
-	   the normal background instead of replacing it */
+	/* The danger colour is see-through, so lay it over the normal background
+	   colour as an image. Hover only swaps the colour underneath. */
 	.button.danger {
-		background:
-			linear-gradient(var(--rb-color-danger), var(--rb-color-danger)),
-			var(--rb-color-main);
-	}
-
-	.button.danger:hover:not(:disabled):not(.loading) {
-		background:
-			linear-gradient(var(--rb-color-danger), var(--rb-color-danger)),
-			var(--rb-color-accent);
+		background-image: linear-gradient(var(--rb-color-danger), var(--rb-color-danger));
 	}
 }

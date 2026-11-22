@@ -48,49 +48,25 @@ function PopoverContent({
 			animationRef.current = null
 		}
 
-		let currentSize = { width: 0, height: 0 }
+		// Grows from 0 to the height measured before it was shown, and back
+		const height = openSizeRef.current?.height ?? 0
+		const { medium, small } = POPOVER_CONFIG.animationOffset
+		const keyframes = createAnimationKeyframes(position, height, open ? medium : small, open, matchTriggerWidth)
 
 		if (open) {
-			// Grow from 0 to the height measured before it was shown
-			currentSize = openSizeRef.current || { width: 0, height: 0 }
-
 			popoverRef.current.style.height = '0px'
 			popoverRef.current.style.overflow = 'hidden'
+		}
+		const animation = popoverRef.current.animate(keyframes, POPOVER_CONFIG.animation)
+		animationRef.current = animation
 
-			const keyframes = createAnimationKeyframes(
-				position,
-				currentSize.height,
-				POPOVER_CONFIG.animationOffset.medium,
-				true,
-				matchTriggerWidth
-			)
-
-			animationRef.current = popoverRef.current.animate(keyframes, POPOVER_CONFIG.animation)
-
+		animation.onfinish = () => {
+			if (!open) return onAnimationComplete?.()
 			// Once open, drop the fill so the popover can resize with its content
-			animationRef.current.onfinish = () => {
-				if (popoverRef.current && open) {
-					animationRef.current?.cancel()
-					popoverRef.current.style.height = 'auto'
-					popoverRef.current.style.overflow = 'visible'
-				}
-			}
-		} else {
-			currentSize = openSizeRef.current || { width: 0, height: 0 }
-
-			const keyframes = createAnimationKeyframes(
-				position,
-				currentSize.height,
-				POPOVER_CONFIG.animationOffset.small,
-				false,
-				matchTriggerWidth
-			)
-
-			animationRef.current = popoverRef.current.animate(keyframes, POPOVER_CONFIG.animation)
-
-			animationRef.current.onfinish = () => {
-				if (onAnimationComplete) onAnimationComplete()
-			}
+			if (!popoverRef.current) return
+			animation.cancel()
+			popoverRef.current.style.height = 'auto'
+			popoverRef.current.style.overflow = 'visible'
 		}
 	}, [open, position, onAnimationComplete, isMeasuring])
 
@@ -305,12 +281,8 @@ export function Popover({
 
 			const triggerRect = childrenRef.current.getBoundingClientRect()
 			const isFixed = isInsideFixedContainer(childrenRef.current)
-			let scrollTop = 0, scrollLeft = 0
-
-			if (!isFixed) {
-				scrollTop = window.scrollY
-				scrollLeft = window.scrollX
-			}
+			const scrollTop = isFixed ? 0 : window.scrollY
+			const scrollLeft = isFixed ? 0 : window.scrollX
 
 			const { viewportPadding: padding, triggerSpacing: spacing } = POPOVER_CONFIG
 

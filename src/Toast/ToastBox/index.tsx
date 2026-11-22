@@ -23,8 +23,6 @@ export interface ToastBoxProps {
 export default function ToastBox(props: ToastBoxProps) {
 	const [isClosing, setIsClosing] = useState(false)
 	const [isAnimationComplete, setIsAnimationComplete] = useState(false)
-	const boxRef = useRef<HTMLDivElement>(null)
-
 	const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const removeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -65,7 +63,6 @@ export default function ToastBox(props: ToastBoxProps) {
 
 	return (
 		<Box
-			ref={boxRef}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
 			className={`rb-toast ${styles.toast} ${isClosing ? styles.closing : ''}`}

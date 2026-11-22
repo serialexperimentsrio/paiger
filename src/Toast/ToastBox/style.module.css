@@ -27,23 +27,17 @@
 	/* Same trick as the danger button: tint on top, solid colour underneath,
 	   so nothing shows through */
 	.toast[data-type='error'] {
-		background:
-			linear-gradient(var(--rb-color-danger), var(--rb-color-danger)),
-			var(--rb-color-main);
+		background-image: linear-gradient(var(--rb-color-danger), var(--rb-color-danger));
 		border-color: color-mix(in srgb, var(--rb-color-danger) 80%, var(--rb-color-accent));
 	}
 
 	.toast[data-type='warning'] {
-		background:
-			linear-gradient(var(--rb-color-warning), var(--rb-color-warning)),
-			var(--rb-color-main);
+		background-image: linear-gradient(var(--rb-color-warning), var(--rb-color-warning));
 		border-color: color-mix(in srgb, var(--rb-color-warning) 80%, var(--rb-color-accent));
 	}
 
 	.toast[data-type='success'] {
-		background:
-			linear-gradient(var(--rb-color-success), var(--rb-color-success)),
-			var(--rb-color-main);
+		background-image: linear-gradient(var(--rb-color-success), var(--rb-color-success));
 		border-color: color-mix(in srgb, var(--rb-color-success) 80%, var(--rb-color-accent));
 	}
 

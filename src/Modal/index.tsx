@@ -27,6 +27,9 @@ let isTransitioningBetweenModals = false
 let modalCount = 0
 export const isModalTransitioning = () => isTransitioningBetweenModals
 
+const FOCUSABLE =
+	'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
 const clearModalTimeout = () => {
 	if (modalTimeoutId !== undefined) {
 		clearTimeout(modalTimeoutId)
@@ -149,9 +152,7 @@ const ModalPortal = () => {
 
 			// Keep Tab inside the dialog
 			if (e.key === 'Tab' && modalActive && dialogRef.current) {
-				const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
-					'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-				)
+				const focusable = dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)
 				if (focusable.length === 0) return
 				const first = focusable[0]
 				const last = focusable[focusable.length - 1]
@@ -177,10 +178,7 @@ const ModalPortal = () => {
 		if (modalActive) {
 			previousFocusRef.current = document.activeElement
 			requestAnimationFrame(() => {
-				const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(
-					'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
-				)
-				firstFocusable?.focus()
+				dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus()
 			})
 		} else {
 			if (previousFocusRef.current instanceof HTMLElement) {
