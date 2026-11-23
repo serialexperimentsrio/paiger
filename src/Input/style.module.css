@@ -1,0 +1,52 @@
+@layer paiger {
+	/* Text fields: the same surface, border and padding as Select, so the
+	   controls of a form line up */
+	.field {
+		box-sizing: border-box;
+		min-width: 0;
+		margin: 0;
+		padding: var(--pg-control-padding-y) calc(var(--pg-control-padding-x) * 0.75);
+		font-family: var(--pg-font);
+		font-size: var(--pg-font-size);
+		line-height: 1.25;
+		color: var(--pg-color-bright);
+		background: var(--pg-color-main);
+		border: var(--pg-border-width) solid var(--pg-color-accent);
+		border-radius: var(--pg-radius);
+		box-shadow: var(--pg-shadow);
+		transition: border-color var(--pg-transition-fast);
+	}
+
+	.field::placeholder {
+		color: var(--pg-color-dim);
+		opacity: 1;
+	}
+
+	.field:hover:not(:disabled, :read-only) {
+		border-color: var(--pg-color-bright);
+	}
+
+	/* Text fields show focus for the mouse too, since you type into them */
+	.field:focus {
+		outline: 2px solid var(--pg-color-bright);
+		outline-offset: 3px;
+	}
+
+	/* Same tint as a danger button: over the background, so nothing shows
+	   through */
+	.field[aria-invalid='true'] {
+		background-image: linear-gradient(var(--pg-color-danger), var(--pg-color-danger));
+		border-color: color-mix(in srgb, var(--pg-color-danger) 80%, var(--pg-color-accent));
+	}
+
+	.field:disabled {
+		opacity: 0.7;
+		color: var(--pg-color-dim);
+		cursor: not-allowed;
+	}
+
+	.textarea {
+		display: block;
+		resize: vertical;
+	}
+}

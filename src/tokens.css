@@ -1,31 +1,76 @@
-/* The default theme. All of ricebowl's CSS sits in the `ricebowl` layer, so
+/* The default theme. All of paiger's CSS sits in the `paiger` layer, so
    any CSS of yours outside a layer wins, whatever its specificity or order.
    :where() keeps these at zero specificity on top of that. */
-@layer ricebowl {
+@layer paiger {
 	:where(:root) {
 		/* Colors */
-		--rb-color-main: #141414; /* component backgrounds */
-		--rb-color-accent: #444444; /* borders, hover states */
-		--rb-color-bright: #f0f0f0; /* primary text */
-		--rb-color-dim: #888888; /* muted/disabled text */
-		--rb-color-danger: rgba(255, 133, 133, 0.16); /* danger tint */
-		--rb-color-warning: rgba(255, 200, 0, 0.16); /* warning tint */
-		--rb-color-success: rgba(0, 200, 100, 0.16); /* success tint */
-		--rb-color-backdrop: rgba(0, 0, 0, 0.3); /* modal overlay */
+		--pg-color-main: #141414; /* component backgrounds */
+		--pg-color-accent: #444444; /* borders, hover states */
+		--pg-color-bright: #f0f0f0; /* primary text */
+		--pg-color-dim: #888888; /* muted/disabled text */
+		--pg-color-danger: rgba(255, 133, 133, 0.16); /* danger tint */
+		--pg-color-warning: rgba(255, 200, 0, 0.16); /* warning tint */
+		--pg-color-success: rgba(0, 200, 100, 0.16); /* success tint */
+		--pg-color-backdrop: rgba(0, 0, 0, 0.3); /* modal overlay */
 
-		--rb-border-width: 2px;
-		--rb-radius: 0px; /* corner radius of every surface */
-		--rb-shadow: 0 0 #0000; /* drop shadow of every surface; must be a real shadow, not none */
-		--rb-font: inherit; /* font of every component */
+		--pg-border-width: 2px;
+		--pg-radius: 0px; /* corner radius of every surface */
+		--pg-shadow: 0 0 #0000; /* drop shadow of every surface; must be a real shadow, not none */
+		--pg-font: inherit; /* font of every component */
+
+		/* Sizing */
+		--pg-font-size: 1rem; /* text in buttons, selects and menus */
+		--pg-padding: 20px; /* inside Box, Panel and modals */
+		--pg-control-padding-y: 10px; /* buttons, select, menu items */
+		--pg-control-padding-x: 20px;
+		--pg-check-size: 18px; /* checkbox and radio; a switch is twice as wide */
+		--pg-tooltip-padding: 4px 8px;
+		--pg-tooltip-max-width: 280px; /* longer tooltips wrap */
+		--pg-toast-width: 300px;
+		--pg-modal-margin: 35px; /* least space between a modal and the window edge */
+
+		/* Loading dots */
+		--pg-loading-size: 6px;
+		--pg-loading-gap: 4px;
+		--pg-loading-speed: 1.2s; /* one full wave */
 
 		/* Z-index layers */
-		--rb-z-popover: 1000;
-		--rb-z-modal: 2000;
-		--rb-z-tooltip: 3000;
-		--rb-z-toast: 4000;
+		/* Popovers, tooltips and toasts use the browser's top layer, above it */
+		--pg-z-modal: 2000;
 
 		/* Transitions */
-		--rb-transition-fast: 0.12s ease;
-		--rb-transition-base: 0.24s ease;
+		--pg-transition-fast: 0.12s ease;
+		--pg-transition-base: 0.24s ease;
+
+		/* Script-driven animations. Reduced motion skips them regardless. */
+		--pg-duration-modal: 0.4s;
+		--pg-duration-popover: 0.3s;
+		--pg-duration-tooltip: 0.2s; /* hiding takes twice as long */
+	}
+
+	/* Built-in light and dark palettes, opt-in with data-pg-theme on <html> or
+	   any element: "light", "dark", or "auto" to follow the system setting.
+	   Each colour is light-dark(light, dark), picked by color-scheme. */
+	:where([data-pg-theme]) {
+		--pg-color-main: light-dark(#fafafa, #141414);
+		--pg-color-accent: light-dark(#d4d4d4, #444444);
+		--pg-color-bright: light-dark(#161616, #f0f0f0);
+		--pg-color-dim: light-dark(#6e6e6e, #888888);
+		--pg-color-danger: light-dark(rgba(220, 38, 38, 0.14), rgba(255, 133, 133, 0.16));
+		--pg-color-warning: light-dark(rgba(217, 160, 0, 0.18), rgba(255, 200, 0, 0.16));
+		--pg-color-success: light-dark(rgba(0, 150, 80, 0.14), rgba(0, 200, 100, 0.16));
+		--pg-color-backdrop: light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.3));
+	}
+
+	:where([data-pg-theme='light']) {
+		color-scheme: light;
+	}
+
+	:where([data-pg-theme='dark']) {
+		color-scheme: dark;
+	}
+
+	:where([data-pg-theme='auto']) {
+		color-scheme: light dark;
 	}
 }

@@ -1,11 +1,10 @@
-@layer ricebowl {
+@layer paiger {
 	.panel {
 		box-sizing: border-box;
 	}
 
 	.box {
 		width: 100%;
-		position: relative;
 		box-sizing: border-box;
 	}
 
@@ -18,7 +17,7 @@
 		margin: 0;
 		padding-left: 4px;
 		margin-bottom: 8px;
-		color: var(--rb-color-dim);
-		font-family: var(--rb-font);
+		color: var(--pg-color-dim);
+		font-family: var(--pg-font);
 	}
 }

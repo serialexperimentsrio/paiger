@@ -1,23 +1,25 @@
 import React, { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import type { Placement } from '../Popover/position'
+import { duration, refOf, setRef } from '../shared'
 import style from './style.module.css'
 
-type MouseEventHandler = (event: React.MouseEvent) => void
-
 type ChildProps = {
-	onMouseEnter?: MouseEventHandler
-	onMouseLeave?: MouseEventHandler
-	[key: string]: unknown
+	onPointerEnter?: React.PointerEventHandler
+	onPointerLeave?: React.PointerEventHandler
+	onFocus?: React.FocusEventHandler
+	onBlur?: React.FocusEventHandler
+	'aria-describedby'?: string
 }
 
-type TooltipProps = {
-	text: string
+export interface TooltipProps {
+	content: React.ReactNode
+	// The trigger. It needs to accept a ref.
 	children: React.ReactElement<ChildProps>
-	above?: boolean
-	left?: boolean
-	right?: boolean
-	forceShow?: boolean
-	forceHide?: boolean
+	placement?: Placement
+	// true keeps it shown, false keeps it hidden; leave it out to show on hover
+	// and keyboard focus
+	open?: boolean
 }
 
 // Every tooltip shares one scroll listener, which tells them when scrolling
@@ -46,183 +48,120 @@ const watchScroll = (watch: (scrolling: boolean) => void) => {
 	}
 }
 
-export function Tooltip({
-	text,
-	children,
-	above,
-	left,
-	right,
-	forceShow,
-	forceHide
-}: TooltipProps) {
-	useEffect(() => {
-		const directionProps = [above, left, right].filter(Boolean)
-		if (directionProps.length > 1) {
-			console.warn(
-				'Tooltip: Multiple direction props detected. Only one of "above", "left", or "right" should be set. ' +
-					'Precedence: right > left > above > default(below)'
-			)
-		}
-	}, [above, left, right])
-
-	const [hovered, setHovered] = useState(false)
+export function Tooltip({ content, children, placement = 'bottom', open }: TooltipProps) {
+	// Hovered, or focused from the keyboard
+	const [engaged, setEngaged] = useState(false)
 	const [visible, setVisible] = useState(false)
+	const shouldShow = open ?? engaged
 
 	const tooltipId = useId()
-	const childRef = useRef<HTMLElement>(null)
+	const childRef = useRef<HTMLElement | null>(null)
 	const boxRef = useRef<HTMLDivElement>(null)
-	const tooltipSize = useRef({ width: 0, height: 0 })
-	const animationRef = useRef<Animation | null>(null)
 	const innerRef = useRef<HTMLDivElement>(null)
-	const lastForceHideRef = useRef(forceHide)
+	const animationRef = useRef<Animation | null>(null)
 	const scrollingRef = useRef(false)
+	// Under a mouse or pen. Kept by hand, since :hover sticks after a tap.
+	const hoveredRef = useRef(false)
+	// The portal needs document.body, so nothing renders on the server
+	const [mounted, setMounted] = useState(false)
+	useEffect(() => setMounted(true), [])
 	// The scroll handler is only set up once, so it reads this instead
-	const forceShowRef = useRef(forceShow)
-	forceShowRef.current = forceShow
+	const pinnedRef = useRef(open)
+	pinnedRef.current = open
 	// Bumped after scrolling stops, so a pinned tooltip comes back
 	const [settled, setSettled] = useState(0)
 
 	// Hide while the page scrolls (the trigger moves away from the tooltip), and
-	// bring it back once scrolling stops if the mouse is still on the trigger
+	// bring it back once scrolling stops if the trigger is still hovered or
+	// keyboard-focused
 	useEffect(
 		() =>
 			watchScroll((scrolling) => {
 				scrollingRef.current = scrolling
 				if (scrolling) {
 					animationRef.current?.cancel()
-					setHovered(false)
+					setEngaged(false)
 					setVisible(false)
 				} else {
-					if (childRef.current?.matches(':hover')) setHovered(true)
-					if (forceShowRef.current) setSettled((n) => n + 1)
+					if (hoveredRef.current || childRef.current?.matches(':focus-visible')) setEngaged(true)
+					if (pinnedRef.current) setSettled((n) => n + 1)
 				}
 			}),
 		[]
 	)
 
 	useEffect(() => {
-		tooltipSize.current = { width: 0, height: 0 }
-	}, [text])
-
-	useEffect(() => {
-		const wasJustForceHidden = !lastForceHideRef.current && forceHide
-		lastForceHideRef.current = forceHide
-
-		if (wasJustForceHidden) {
-			setVisible(false)
-		}
-
-		if (forceHide) {
-			return
-		}
-
-		const shouldShow = hovered || forceShow
-
-		if (shouldShow) {
-			setVisible(true)
-		}
-
-		if (!childRef.current || !boxRef.current) return
+		if (shouldShow) setVisible(true)
+		if (!childRef.current || !boxRef.current || !innerRef.current) return
+		// In the top layer, so it shows above popovers and anything else there
+		if (!boxRef.current.matches(':popover-open')) boxRef.current.showPopover()
 
 		const childRect = childRef.current.getBoundingClientRect()
+		// Measured every time, since the content can change between showings
+		const innerRect = innerRef.current.getBoundingClientRect()
+		const size = { width: Math.round(innerRect.width + 4), height: Math.round(innerRect.height + 4) }
+		// Fixed in the viewport: no scroll offsets, and it works inside fixed
+		// headers. It hides while the page scrolls, so it never has to follow.
+		boxRef.current.style.position = 'fixed'
+		const viewWidth = document.documentElement.clientWidth
+		const viewHeight = document.documentElement.clientHeight
 
-		if (tooltipSize.current.width === 0 && innerRef.current) {
-			const boxRect = innerRef.current.getBoundingClientRect()
-			tooltipSize.current = {
-				width: Math.round(boxRect.width + 4),
-				height: Math.round(boxRect.height + 4)
-			}
+		// The side asked for, or the opposite one when only that one has room
+		const opposite = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' } as const
+		const room = {
+			top: childRect.top,
+			bottom: viewHeight - childRect.bottom,
+			left: childRect.left,
+			right: viewWidth - childRect.right
 		}
+		const fits = (side: Placement) =>
+			room[side] >= (side === 'top' || side === 'bottom' ? size.height : size.width) + 10
+		const side = fits(placement) || !fits(opposite[placement]) ? placement : opposite[placement]
 
-		boxRef.current.style.position = 'absolute'
+		const px = (n: number) => `${Math.round(n)}px`
+		const centerX = childRect.left + childRect.width / 2
+		const middleY = childRect.top + childRect.height / 2
+		// Keeps it 5px inside the edges of the window, but only while the
+		// trigger is on screen. A pinned tooltip whose trigger has scrolled away
+		// goes with it, instead of sticking to the edge.
+		const onScreen =
+			childRect.bottom > 0 && childRect.top < viewHeight && childRect.right > 0 && childRect.left < viewWidth
+		const clamp = (n: number, room: number, length: number) =>
+			onScreen ? Math.max(5, Math.min(n, room - length - 5)) : n
+		const clampX = (left: number) => clamp(left, viewWidth, size.width)
+		const clampY = (top: number) => clamp(top, viewHeight, size.height)
 
-		const keyframes = [
-			{
-				opacity: 0,
-				top: `${Math.round(
-					childRect.top + childRect.height + window.scrollY - 10
-				)}px`,
-				left: `${Math.round(
-					childRect.left + window.scrollX + childRect.width / 2
-				)}px`,
-				width: 0,
-				height: 0
-			},
-			{
-				opacity: 1,
-				top: `${Math.round(
-					childRect.top + childRect.height + 5 + window.scrollY
-				)}px`,
-				left: `min(${Math.round(
-					childRect.left +
-						childRect.width / 2 -
-						tooltipSize.current.width / 2 +
-						window.scrollX
-				)}px, ${Math.round(
-					window.innerWidth - tooltipSize.current.width - 20
-				)}px)`,
-				width: `${tooltipSize.current.width}px`,
-				height: `${tooltipSize.current.height}px`
-			}
-		]
+		// Where it unfolds from (just inside the trigger) and where it ends up
+		const from: Keyframe = { opacity: 0, width: 0, height: 0 }
+		const to: Keyframe = { opacity: 1, width: px(size.width), height: px(size.height) }
 
-		if (above) {
-			keyframes[0].top = `${Math.round(childRect.top + window.scrollY + 10)}px`
-			keyframes[1].top = `${Math.round(
-				childRect.top - tooltipSize.current.height - 5 + window.scrollY
-			)}px`
+		if (side === 'top') {
+			from.top = px(childRect.top + 10)
+			from.left = px(centerX)
+			to.top = px(childRect.top - size.height - 5)
+			to.left = px(clampX(centerX - size.width / 2))
+		} else if (side === 'left') {
+			from.top = px(middleY)
+			from.left = px(childRect.left + 10)
+			to.top = px(clampY(middleY - size.height / 2))
+			to.left = px(clampX(childRect.left - size.width - 5))
+		} else if (side === 'right') {
+			from.top = px(middleY)
+			from.left = px(childRect.right - 10)
+			to.top = px(clampY(middleY - size.height / 2))
+			to.left = px(clampX(childRect.right + 5))
+		} else {
+			from.top = px(childRect.bottom - 10)
+			from.left = px(centerX)
+			to.top = px(childRect.bottom + 5)
+			to.left = px(clampX(centerX - size.width / 2))
 		}
-
-		if (left) {
-			keyframes[0].top = `${Math.round(
-				childRect.top + childRect.height / 2 + window.scrollY
-			)}px`
-			keyframes[0].left = `${Math.round(
-				childRect.left + window.scrollX + 10
-			)}px`
-			keyframes[1].top = `${Math.round(
-				childRect.top +
-					childRect.height / 2 -
-					tooltipSize.current.height / 2 +
-					window.scrollY
-			)}px`
-			keyframes[1].left = `${Math.max(
-				5,
-				Math.round(
-					childRect.left -
-						tooltipSize.current.width -
-						5 +
-						window.scrollX
-				)
-			)}px`
-		}
-
-		if (right) {
-			keyframes[0].top = `${Math.round(
-				childRect.top + childRect.height / 2 + window.scrollY
-			)}px`
-			keyframes[0].left = `${Math.round(
-				childRect.left + childRect.width + window.scrollX - 10
-			)}px`
-			keyframes[1].top = `${Math.round(
-				childRect.top +
-					childRect.height / 2 -
-					tooltipSize.current.height / 2 +
-					window.scrollY
-			)}px`
-			keyframes[1].left = `${Math.min(
-				window.innerWidth - tooltipSize.current.width - 5,
-				Math.round(
-					childRect.left + childRect.width + 5 + window.scrollX
-				)
-			)}px`
-		}
-
-		if (!shouldShow) keyframes.reverse()
 
 		animationRef.current?.cancel()
-		const animation = boxRef.current.animate(keyframes, {
-			duration: shouldShow ? 200 : 400,
+		const length = duration('--pg-duration-tooltip', 200)
+		const animation = boxRef.current.animate(shouldShow ? [from, to] : [to, from], {
+			// Hiding takes twice as long as showing
+			duration: shouldShow ? length : length * 2,
 			easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
 			fill: 'forwards'
 		})
@@ -235,46 +174,71 @@ export function Tooltip({
 		return () => {
 			animation.cancel()
 		}
-	}, [hovered, forceShow, forceHide, above, left, right, settled])
+	}, [shouldShow, placement, settled])
 
-	const isHorizontal = left || right
-	// Render it whenever forceShow is on, since the effect needs the box to
+	// Escape hides a hovered or focused tooltip without moving the pointer or
+	// focus. A pinned one stays.
+	useEffect(() => {
+		if (!engaged || open !== undefined) return
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') setEngaged(false)
+		}
+		document.addEventListener('keydown', onKeyDown)
+		return () => document.removeEventListener('keydown', onKeyDown)
+	}, [engaged, open])
+
+	const isHorizontal = placement === 'left' || placement === 'right'
+	const rendered = shouldShow || visible
+	// Render it whenever it should show, since the effect needs the box to
 	// measure and animate
 	const tooltipContent =
-		(hovered || visible || (forceShow && !forceHide)) &&
+		rendered &&
+		mounted &&
 		createPortal(
-			<div ref={boxRef} id={tooltipId} role="tooltip" className={`rb-tooltip ${style.tooltip}`}>
-				<div ref={innerRef} className={`rb-tooltip-text ${style.tooltipInner} ${isHorizontal ? style.horizontal : style.vertical}`}>
-					{text}
+			<div ref={boxRef} id={tooltipId} role="tooltip" popover="manual" className={`pg-tooltip ${style.tooltip}`}>
+				<div ref={innerRef} className={`pg-tooltip-text ${style.tooltipInner} ${isHorizontal ? style.horizontal : style.vertical}`}>
+					{content}
 				</div>
 			</div>,
 			document.body
 		)
 
-	const clone = React.cloneElement(children, {
+	const own = children.props
+	const clone = React.cloneElement(children as React.ReactElement<Record<string, unknown>>, {
 		// Only point at the tooltip while it exists
-		'aria-describedby':
-			[children.props['aria-describedby'], (hovered || visible || forceShow) && tooltipId]
-				.filter(Boolean)
-				.join(' ') || undefined,
+		'aria-describedby': [own['aria-describedby'], rendered && tooltipId].filter(Boolean).join(' ') || undefined,
 
-		// Keep the child's own ref working (React 19 has it in props.ref)
+		// Keep the child's own ref working alongside ours
 		ref: (node: HTMLElement | null) => {
 			childRef.current = node
-			const own = (children.props as { ref?: React.Ref<HTMLElement> }).ref
-			if (typeof own === 'function') own(node)
-			else if (own) own.current = node
+			setRef(refOf<HTMLElement>(children), node)
 		},
 
-		onMouseEnter: (e: React.MouseEvent) => {
-			// Mid-scroll, the timer above handles this
-			if (!scrollingRef.current) setHovered(true)
-			children.props.onMouseEnter?.(e)
+		// Not on touch: a tap would open it with nothing to close it again
+		onPointerEnter: (e: React.PointerEvent) => {
+			if (e.pointerType !== 'touch') {
+				hoveredRef.current = true
+				// Mid-scroll, the scroll watcher handles this
+				if (!scrollingRef.current) setEngaged(true)
+			}
+			own.onPointerEnter?.(e)
 		},
 
-		onMouseLeave: (e: React.MouseEvent) => {
-			setHovered(false)
-			children.props.onMouseLeave?.(e)
+		onPointerLeave: (e: React.PointerEvent) => {
+			hoveredRef.current = false
+			setEngaged(false)
+			own.onPointerLeave?.(e)
+		},
+
+		// Keyboard focus shows it too; a mouse click focusing the trigger doesn't
+		onFocus: (e: React.FocusEvent<HTMLElement>) => {
+			if (e.currentTarget.matches(':focus-visible')) setEngaged(true)
+			own.onFocus?.(e)
+		},
+
+		onBlur: (e: React.FocusEvent) => {
+			setEngaged(false)
+			own.onBlur?.(e)
 		}
 	})
 

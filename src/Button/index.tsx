@@ -1,61 +1,65 @@
-import type { ButtonHTMLAttributes, ForwardedRef } from 'react'
+import type { ButtonHTMLAttributes, ForwardedRef, MouseEvent } from 'react'
 import { forwardRef, useState } from 'react'
 import style from './style.module.css'
+import sweep from '../sweep.module.css'
 
-interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
-	onClick?: (() => Promise<unknown>) | (() => unknown)
-	forceLoading?: boolean
+export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
+	// Return a promise and the button shows its loading state until it settles
+	onClick?: (event: MouseEvent<HTMLButtonElement>) => unknown
+	// Shows the loading state from outside, e.g. while a form submits
+	loading?: boolean
 	danger?: boolean
-	disabled?: boolean
+	size?: 'small' | 'medium' | 'large'
+	// Ghost buttons have no fill or border until hovered
+	variant?: 'solid' | 'ghost'
 }
 
-export const Button = forwardRef(
-	(
-		{ onClick, forceLoading, danger, disabled, ...rest }: Props,
-		ref: ForwardedRef<HTMLButtonElement>
-	) => {
-		// Only tracks our own async onClick; forceLoading is read straight from props
-		const [loading, setLoading] = useState(false)
-		const isLoading = loading || forceLoading
+export const Button = /* @__PURE__ */ forwardRef(function Button(
+	{ onClick, loading: loadingProp, danger, size = 'medium', variant = 'solid', className, ...rest }: ButtonProps,
+	ref: ForwardedRef<HTMLButtonElement>
+) {
+	// Only tracks a promise from our own onClick; the prop is read as it is
+	const [pending, setPending] = useState(false)
+	const loading = pending || loadingProp
 
-		const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
-			// We don't set `disabled` while loading because that drops keyboard focus,
-			// so ignore extra clicks here instead
-			if (isLoading) {
-				e.preventDefault()
-				return
-			}
-			if (onClick == null) return
-			e.preventDefault()
-			setLoading(true)
-			try {
-				await onClick()
-			} finally {
-				setLoading(false)
-			}
+	const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+		// We don't set `disabled` while loading because that drops keyboard focus,
+		// so extra clicks (and form submits) are stopped here instead
+		if (loading) {
+			event.preventDefault()
+			return
 		}
-
-		return (
-			<button
-				{...rest}
-				ref={ref}
-				onClick={handleClick}
-				disabled={disabled}
-				aria-busy={isLoading || undefined}
-				data-loading={isLoading || undefined}
-				data-danger={danger || undefined}
-				className={[
-					'rb-button',
-					isLoading && style.loading,
-					danger && style.danger,
-					rest.className,
-					style.button
-				]
-					.filter(Boolean)
-					.join(' ')}
-			/>
-		)
+		const result = onClick?.(event)
+		if (typeof (result as PromiseLike<unknown> | undefined)?.then !== 'function') return
+		setPending(true)
+		Promise.resolve(result).finally(() => setPending(false))
 	}
-)
 
-Button.displayName = 'Button'
+	return (
+		<button
+			// Inside a form, a plain <button> would submit it; opt in with type="submit"
+			type="button"
+			{...rest}
+			ref={ref}
+			onClick={handleClick}
+			aria-busy={loading || undefined}
+			data-loading={loading || undefined}
+			data-danger={danger || undefined}
+			data-size={size}
+			data-variant={variant}
+			className={[
+				'pg-button',
+				style.button,
+				sweep.sweep,
+				size !== 'medium' && style[size],
+				variant === 'ghost' && style.ghost,
+				danger && style.danger,
+				loading && sweep.active,
+				loading && style.loading,
+				className
+			]
+				.filter(Boolean)
+				.join(' ')}
+		/>
+	)
+})

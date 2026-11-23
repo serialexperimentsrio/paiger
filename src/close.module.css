@@ -1,0 +1,43 @@
+@layer paiger {
+	/* The × on modals and toasts, drawn with two lines rather than a glyph, so
+	   it looks the same in any font. Each component places it. */
+	.close {
+		width: 24px;
+		height: 24px;
+		padding: 0;
+		border: none;
+		border-radius: var(--pg-radius);
+		background: none;
+		color: var(--pg-color-dim);
+		cursor: pointer;
+		transition: color var(--pg-transition-fast);
+	}
+
+	.close::before,
+	.close::after {
+		content: '';
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: 12px;
+		height: var(--pg-border-width);
+		background: currentColor;
+		translate: -50% -50%;
+		rotate: 45deg;
+	}
+
+	.close::after {
+		rotate: -45deg;
+	}
+
+	/* Only the lines change: a fill would need two theme colours that
+	   contrast, and some themes use the same ink for both */
+	.close:hover {
+		color: var(--pg-color-bright);
+	}
+
+	.close:focus-visible {
+		outline: 2px solid var(--pg-color-bright);
+		outline-offset: -2px;
+	}
+}

@@ -1,171 +1,167 @@
 import React, { useEffect, useRef, useState } from 'react'
-import ReactDOM from 'react-dom/client'
-import { ANIMATION_CONFIG } from './animationConfig'
+import { createPortal } from 'react-dom'
+import { focusables, useHostEffect } from '../shared'
+import { modalDuration, swapDuration } from './animationConfig'
 import style from './style.module.css'
 
-// There is only ever one modal on screen, so its state lives up here.
-// previousModal is what openPreviousModal() goes back to.
-let currentModal: React.ReactNode | undefined
-let previousModal: React.ReactNode | undefined
-let previousOnClose: (() => void) | undefined
-export let modalActive = false
-let onCloseCallback: (() => void) | undefined
-let closeInnerModalFn: ((isNested?: boolean) => void) | undefined
+type Entry = { content: React.ReactNode; onClose?: () => void }
 
-// Pending transition, cancelled if another one starts
-let modalTimeoutId: number | undefined
-// Bumped on every setModal, so timers from an older call know they're stale
-let modalGeneration = 0
+// Only one modal is on screen at a time. These describe it; <ModalHost>
+// (inside <PaigerProvider>) draws it and resets them when it unmounts.
+let open: Entry | undefined // the modal that is open, or opening
+let history: Entry[] = [] // what openPreviousModal() goes back through
+let rendered: React.ReactNode // what the host draws: lags behind during animations
+let active = false // the backdrop is up and the modal is in, not mid-close
+let swapping = false
+let closeAnimation: ((swap: boolean) => void) | undefined
+let timer: number | undefined
+// Bumped on every change, so timers from an older one know they're stale
+let generation = 0
+let keyCount = 0
+let update: (() => void) | undefined
+// What had focus before the first modal opened; it gets focus back at the end
+let returnFocus: Element | null = null
 
-export const registerCloseAnimation = (
-	closeFunction: (isNested?: boolean) => void
-) => {
-	closeInnerModalFn = closeFunction
+export const registerCloseAnimation = (animate: (swap: boolean) => void) => {
+	closeAnimation = animate
 }
 
-let isTransitioningBetweenModals = false
-let modalCount = 0
-export const isModalTransitioning = () => isTransitioningBetweenModals
+export const isModalTransitioning = () => swapping
 
-const FOCUSABLE =
-	'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+export const isModalOpen = () => open !== undefined
 
-const clearModalTimeout = () => {
-	if (modalTimeoutId !== undefined) {
-		clearTimeout(modalTimeoutId)
-		modalTimeoutId = undefined
-		isTransitioningBetweenModals = false
-	}
+const hostReady = () => {
+	if (update) return true
+	console.error('paiger: modals need <PaigerProvider> mounted somewhere in your app')
+	return false
 }
 
-// A fresh key makes React remount, so the open animation plays even when the
-// same component is shown twice in a row
-const addKeyToModalContent = (content: React.ReactNode): React.ReactNode => {
-	if (React.isValidElement(content)) {
-		return React.cloneElement(content, { key: `modal-${++modalCount}` })
-	}
-	return content
-}
+const present = (entry: Entry) => {
+	clearTimeout(timer)
+	const current = ++generation
+	// A fresh key makes React remount, so the open animation plays even when
+	// the same component is shown twice in a row
+	const content = React.isValidElement(entry.content)
+		? React.cloneElement(entry.content, { key: `modal-${++keyCount}` })
+		: entry.content
 
-export const setModal = (content: React.ReactNode, onClose?: () => void) => {
-	initModalPortal()
-	if (currentModal != null) {
-		previousModal = currentModal
-		previousOnClose = onCloseCallback
-	}
-
-	clearModalTimeout()
-
-	modalGeneration++
-	const currentGeneration = modalGeneration
-
-	const contentWithKey = addKeyToModalContent(content)
-
-	// Nothing open yet, so just show it
-	if (!modalActive && !isTransitioningBetweenModals) {
-		currentModal = contentWithKey
-		onCloseCallback = onClose
-		modalActive = true
-		if (portalUpdateFn) portalUpdateFn({})
+	// Nothing on screen yet, so just show it
+	if (!active && !swapping) {
+		rendered = content
+		active = true
+		update?.()
 		return
 	}
 
-	// Something is already open: close it, wait for that to finish, then open
-	// the new one
-	isTransitioningBetweenModals = true
-
-	if (closeInnerModalFn) closeInnerModalFn(true)
-
-	modalActive = false
-	if (portalUpdateFn) portalUpdateFn({})
-
-	const pendingContent = contentWithKey
-	const pendingOnClose = onClose
-
-	modalTimeoutId = window.setTimeout(() => {
-		if (currentGeneration !== modalGeneration) return
-
-		currentModal = undefined
-		if (portalUpdateFn) portalUpdateFn({})
-
+	// Something is showing: close it quickly, then bring in the new one
+	swapping = true
+	closeAnimation?.(true)
+	active = false
+	update?.()
+	timer = window.setTimeout(() => {
+		if (current !== generation) return
+		rendered = undefined
+		update?.()
 		// Give the old one a frame to unmount
-		window.setTimeout(() => {
-			if (currentGeneration !== modalGeneration) return
-
-			currentModal = pendingContent
-			onCloseCallback = pendingOnClose
-			modalActive = true
-			isTransitioningBetweenModals = false
-			if (portalUpdateFn) portalUpdateFn({})
+		timer = window.setTimeout(() => {
+			if (current !== generation) return
+			rendered = content
+			active = true
+			swapping = false
+			update?.()
 		}, 16)
-	}, ANIMATION_CONFIG.nestedTransition.duration)
+	}, swapDuration())
+}
+
+// onClose runs once, when the modal is gone for good: closed, left with
+// openPreviousModal(), or dropped from the history when the modals close.
+// Being replaced by another modal only moves it into the history.
+export const setModal = (content: React.ReactNode, onClose?: () => void) => {
+	if (!hostReady()) return
+	if (open) {
+		history.push(open)
+	} else {
+		returnFocus = document.activeElement
+	}
+	open = { content, onClose }
+	present(open)
+}
+
+export const openPreviousModal = () => {
+	if (!hostReady()) return
+	const previous = history.pop()
+	if (!previous) return
+	open?.onClose?.()
+	open = previous
+	present(previous)
 }
 
 export const hideModal = () => {
-	previousModal = undefined
-	previousOnClose = undefined
+	if (!open) return
+	// The open one first, then the history from newest to oldest
+	const closing = [open, ...history.reverse()]
+	open = undefined
+	history = []
+	closing.forEach((entry) => entry.onClose?.())
 
-	if (!modalActive) return
-
-	clearModalTimeout()
-
-	modalActive = false
-
-	if (closeInnerModalFn) closeInnerModalFn(false)
-
-	if (portalUpdateFn) portalUpdateFn({})
+	clearTimeout(timer)
+	const current = ++generation
+	swapping = false
+	active = false
+	closeAnimation?.(false)
+	update?.()
 
 	// Keep the content around until the close animation is done, or it would
 	// just vanish
-	modalTimeoutId = window.setTimeout(() => {
-		if (!modalActive) {
-			currentModal = undefined
-			isTransitioningBetweenModals = false
-			if (portalUpdateFn) portalUpdateFn({})
-		}
-	}, ANIMATION_CONFIG.modalTransition.duration)
+	timer = window.setTimeout(() => {
+		if (current !== generation) return
+		rendered = undefined
+		update?.()
+	}, modalDuration())
 }
 
-let portalUpdateFn: ((value: Record<string, never>) => void) | null = null
-
-// Escape and clicking the backdrop both count as dismissing it
-const dismissModal = () => {
-	onCloseCallback?.()
-	hideModal()
-}
-
-const ModalPortal = () => {
-	const [, forceUpdate] = useState({})
+export function ModalHost() {
+	const [, forceUpdate] = useState(0)
+	const [mounted, setMounted] = useState(false)
 	const dialogRef = useRef<HTMLDivElement>(null)
-	const previousFocusRef = useRef<Element | null>(null)
+	const backdropRef = useRef<HTMLDivElement>(null)
+	const isOpen = open !== undefined
 
-	useEffect(() => {
-		portalUpdateFn = forceUpdate
+	useHostEffect(() => {
+		setMounted(true)
+		update = () => forceUpdate((n) => n + 1)
 		return () => {
-			portalUpdateFn = null
+			// Start clean next time, e.g. between tests
+			clearTimeout(timer)
+			generation++
+			update = undefined
+			open = undefined
+			history = []
+			rendered = undefined
+			active = swapping = false
+			closeAnimation = undefined
+			returnFocus = null
 		}
 	}, [])
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
-			if (e.key === 'Escape' && modalActive) dismissModal()
+			if (!active) return
+			// A popover inside the modal handles its own Escape and marks it handled
+			if (e.key === 'Escape' && !e.defaultPrevented) hideModal()
 
 			// Keep Tab inside the dialog
-			if (e.key === 'Tab' && modalActive && dialogRef.current) {
-				const focusable = dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)
+			if (e.key === 'Tab' && dialogRef.current) {
+				const focusable = focusables(dialogRef.current)
 				if (focusable.length === 0) return
 				const first = focusable[0]
 				const last = focusable[focusable.length - 1]
-				if (e.shiftKey) {
-					if (document.activeElement === first) {
-						e.preventDefault()
-						last.focus()
-					}
-				} else {
-					if (document.activeElement === last) {
-						e.preventDefault()
-						first.focus()
-					}
+				if (e.shiftKey && document.activeElement === first) {
+					e.preventDefault()
+					last.focus()
+				} else if (!e.shiftKey && document.activeElement === last) {
+					e.preventDefault()
+					first.focus()
 				}
 			}
 		}
@@ -173,58 +169,50 @@ const ModalPortal = () => {
 		return () => document.removeEventListener('keydown', handleKeyDown)
 	}, [])
 
-	// Remember what had focus, and give it back on close
+	// While any modal is open (swaps included): make the page behind it inert,
+	// so neither clicks, Tab nor a screen reader can reach it, stop it from
+	// scrolling, and give focus back to whatever had it once it closes.
+	// (Each ModalBox moves focus in by itself.)
 	useEffect(() => {
-		if (modalActive) {
-			previousFocusRef.current = document.activeElement
-			requestAnimationFrame(() => {
-				dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus()
-			})
-		} else {
-			if (previousFocusRef.current instanceof HTMLElement) {
-				previousFocusRef.current.focus()
-			}
-			previousFocusRef.current = null
-		}
-	}, [modalActive])
+		if (!isOpen) return
+		// Everything else at the top of <body>, except toasts, which stay usable
+		const madeInert = [...document.body.children].filter(
+			(el) =>
+				el !== backdropRef.current &&
+				el !== dialogRef.current &&
+				!el.matches('.pg-toast-container, script, style') &&
+				!el.hasAttribute('inert')
+		)
+		madeInert.forEach((el) => el.setAttribute('inert', ''))
 
-	return (
+		const root = document.documentElement
+		const { overflow, scrollbarGutter } = root.style
+		// If the page has a scrollbar, keep its space, so nothing shifts sideways
+		if (window.innerWidth > root.clientWidth) root.style.scrollbarGutter = 'stable'
+		root.style.overflow = 'hidden'
+		return () => {
+			madeInert.forEach((el) => el.removeAttribute('inert'))
+			root.style.overflow = overflow
+			root.style.scrollbarGutter = scrollbarGutter
+			if (returnFocus instanceof HTMLElement) returnFocus.focus()
+			returnFocus = null
+		}
+	}, [isOpen])
+
+	if (!mounted) return null
+
+	return createPortal(
 		<>
 			<div
-				onClick={dismissModal}
-				className={`rb-modal-backdrop ${style.modalBackdrop} ${modalActive ? style.active : ''}`}
-				data-active={modalActive || undefined}
+				ref={backdropRef}
+				onClick={hideModal}
+				className={`pg-modal-backdrop ${style.modalBackdrop} ${active ? style.active : ''}`}
+				data-active={active || undefined}
 			/>
-			<div
-				ref={dialogRef}
-				role="dialog"
-				aria-modal="true"
-				style={{ display: 'contents' }}
-			>
-				{currentModal}
+			<div ref={dialogRef} style={{ display: 'contents' }}>
+				{rendered}
 			</div>
-		</>
+		</>,
+		document.body
 	)
 }
-
-let portalInitialized = false
-
-const initModalPortal = () => {
-	if (typeof document === 'undefined' || portalInitialized) return
-
-	const portal = document.createElement('div')
-	portal.id = 'modal-portal'
-	document.body.appendChild(portal)
-
-	ReactDOM.createRoot(portal).render(<ModalPortal />)
-
-	portalInitialized = true
-}
-
-export const openPreviousModal = () => {
-	if (!previousModal) return
-	setModal(previousModal, previousOnClose)
-	previousModal = undefined
-	previousOnClose = undefined
-}
-

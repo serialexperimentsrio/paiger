@@ -12,6 +12,9 @@ const sharedOptions = {
   sourcemap: true,
   target: 'es2020',
   jsx: 'automatic',
+  // Every component uses hooks or the DOM, so Next's App Router has to treat
+  // the whole package as client code
+  banner: { js: "'use client';" },
   plugins: [
     cssModulesPlugin({
       force: true,

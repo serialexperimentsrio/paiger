@@ -1,25 +1,23 @@
-@layer ricebowl {
+@layer paiger {
 	.box {
-		background: var(--rb-color-main);
-		border: var(--rb-border-width) solid var(--rb-color-accent);
-		border-radius: var(--rb-radius);
-		box-shadow: var(--rb-shadow);
-		font-family: var(--rb-font);
-		padding: 20px;
+		background: var(--pg-color-main);
+		color: var(--pg-color-bright);
+		border: var(--pg-border-width) solid var(--pg-color-accent);
+		border-radius: var(--pg-radius);
+		box-shadow: var(--pg-shadow);
+		font-family: var(--pg-font);
+		padding: var(--pg-padding);
 		position: relative;
+		/* Its own stacking context, so the images can sit behind the content
+		   with negative z-index without anything leaking out to the page */
+		isolation: isolate;
 		overflow: hidden;
-		transition: background var(--rb-transition-base);
-	}
-
-	/* Zero specificity, so children can still set their own position */
-	:where(.box) > * {
-		position: relative;
-		/* Keep content above the background image and icon */
-		z-index: 100;
+		transition: background var(--pg-transition-base);
 	}
 
 	.iconbg {
 		position: absolute;
+		z-index: -2;
 		opacity: 0.2;
 		transform: translateY(-50%);
 		right: -10%;
@@ -34,7 +32,7 @@
 		transform: translate(-50%, -50%);
 		width: 100%;
 		min-height: 100%;
-		z-index: 2;
+		z-index: -1;
 		object-fit: cover;
 		opacity: 0.05;
 		pointer-events: none;

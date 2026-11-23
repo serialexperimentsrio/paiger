@@ -1,37 +1,38 @@
 import type { CSSProperties, ForwardedRef } from 'react'
-import { forwardRef } from 'react'
+import { forwardRef, useContext } from 'react'
+import { LabelsContext } from '../shared'
 import styles from './style.module.css'
 
-type LoadingProps = {
+export type LoadingProps = {
 	style?: CSSProperties
-	inline?: boolean
+	// Centre it over the nearest positioned parent instead of sitting in the text
+	center?: boolean
 	className?: string
 }
 
-export const Loading = forwardRef(
-	(
-		{ style, inline, className }: LoadingProps,
-		ref: ForwardedRef<HTMLSpanElement>
-	) => {
-		return (
-			<span
-				ref={ref}
-				className={`rb-loading ${styles.loadingAnimation} ${
-					inline ? styles.inline : ''
-				} ${className || ''}`}
-				style={style}
-				role="status"
-				aria-busy="true"
-				aria-label="Loading"
-			>
-				{['dot1', 'dot2', 'dot3'].map((id, i) => (
-					<i key={id} style={{ animationDelay: `${i * 0.1}s` }} aria-hidden="true">
-						.
-					</i>
-				))}
-			</span>
-		)
-	}
-)
-
-Loading.displayName = 'Loading'
+export const Loading = /* @__PURE__ */ forwardRef(function Loading(
+	{ style, center, className }: LoadingProps,
+	ref: ForwardedRef<HTMLSpanElement>
+) {
+	const labels = useContext(LabelsContext)
+	return (
+		<span
+			ref={ref}
+			className={[
+				'pg-loading',
+				styles.loading,
+				center && styles.center,
+				className
+			]
+				.filter(Boolean)
+				.join(' ')}
+			style={style}
+			role="status"
+			aria-label={labels.loading}
+		>
+			<span className={`pg-loading-dot ${styles.dot}`} aria-hidden="true" />
+			<span className={`pg-loading-dot ${styles.dot}`} aria-hidden="true" />
+			<span className={`pg-loading-dot ${styles.dot}`} aria-hidden="true" />
+		</span>
+	)
+})

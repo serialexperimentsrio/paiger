@@ -1,0 +1,64 @@
+@layer paiger {
+	/* The "busy" look of a control that's waiting on its own action: a light
+	   travelling along the top and bottom edges, in opposite directions.
+	   Button and Dropdown items share it. --pg-sweep-offset puts the lines on
+	   the border (the default) or just inside it. */
+	@keyframes sweep {
+		0% {
+			background-position-x: 0%;
+		}
+		100% {
+			background-position-x: 200%;
+		}
+	}
+
+	.sweep::after,
+	.sweep::before {
+		content: '';
+		position: absolute;
+		left: var(--pg-sweep-offset, calc(var(--pg-border-width) * -1));
+		right: var(--pg-sweep-offset, calc(var(--pg-border-width) * -1));
+		height: var(--pg-border-width);
+		background: linear-gradient(
+			90deg,
+			transparent 0%,
+			transparent 50%,
+			var(--pg-color-bright) 50%,
+			var(--pg-color-bright) 100%
+		);
+		background-size: 200%;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 0.5s ease;
+	}
+
+	.sweep::after {
+		bottom: var(--pg-sweep-offset, calc(var(--pg-border-width) * -1));
+	}
+
+	.sweep::before {
+		top: var(--pg-sweep-offset, calc(var(--pg-border-width) * -1));
+		transform: scale(-1);
+	}
+
+	/* Only animate while busy, not forever on every idle control */
+	.sweep.active::after,
+	.sweep.active::before {
+		opacity: 0.2;
+		animation: sweep 2s ease infinite;
+	}
+
+	.sweep.active::before {
+		animation-delay: 1s;
+	}
+
+	/* No travelling light: both edges just light up while busy */
+	@media (prefers-reduced-motion: reduce) {
+		.sweep.active::after,
+		.sweep.active::before {
+			animation: none;
+			background: var(--pg-color-bright);
+			opacity: 0.35;
+		}
+	}
+}

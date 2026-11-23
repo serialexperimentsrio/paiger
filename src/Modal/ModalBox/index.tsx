@@ -1,33 +1,48 @@
 import { Box } from '../../Box'
 import type React from 'react'
-import { useEffect, useRef } from 'react'
-import { isModalTransitioning, registerCloseAnimation } from '../'
-import { ANIMATION_CONFIG } from '../animationConfig'
+import { useContext, useEffect, useId, useRef } from 'react'
+import { hideModal, isModalTransitioning, registerCloseAnimation } from '../'
+import { MODAL_EASING, MODAL_FILTER, modalDuration, swapDuration } from '../animationConfig'
+import { LabelsContext, focusables } from '../../shared'
 import style from './style.module.css'
+import close from '../../close.module.css'
 
 export interface ModalBoxProps {
 	className?: string
 	style?: React.CSSProperties
 	children: React.ReactNode
+	// Shown as the heading, and what screen readers announce the dialog as.
+	// Without one, pass aria-label instead.
+	title?: React.ReactNode
+	'aria-label'?: string
+	// The × in the corner. It closes the modal like Escape does.
+	closeButton?: boolean
 	icon?: string
 	image?: string
 }
-
-export type ModalBoxComponent = React.ReactElement<ModalBoxProps>
 
 export const ModalBox = ({
 	className,
 	style: propStyle,
 	children,
+	title,
+	'aria-label': ariaLabel,
+	closeButton = true,
 	icon,
 	image
 }: ModalBoxProps) => {
+	const titleId = useId()
+	const labels = useContext(LabelsContext)
 	const divRef = useRef<HTMLDivElement>(null)
 	const opened = useRef(false)
 
-	// Forms: start in the first input
+	// Focus goes in as it opens: to the first field of a form, otherwise to
+	// the first control (the × comes last, so it's only picked when alone).
+	// Only visible ones, so a Select's hidden input doesn't count as a field.
 	useEffect(() => {
-		divRef.current?.querySelector('input')?.focus({ preventScroll: true })
+		const controls = divRef.current ? focusables(divRef.current) : []
+		const target = controls.find((el) => el.matches('input, select, textarea')) ?? controls[0]
+		target?.focus({ preventScroll: true })
 	}, [])
 
 	useEffect(() => {
@@ -36,13 +51,11 @@ export const ModalBox = ({
 		const animateOuterModal = (from: Keyframe, to: Keyframe) => {
 			if (!divRef.current) return
 			divRef.current.parentElement?.animate([from, to], {
-				duration: ANIMATION_CONFIG.modalTransition.duration,
-				easing: ANIMATION_CONFIG.modalTransition.easing,
+				duration: modalDuration(),
+				easing: MODAL_EASING,
 				fill: 'forwards'
 			})
 		}
-
-		const { initialFilter } = ANIMATION_CONFIG.modalTransition
 
 		const finalStyles = () => {
 			const rect = divRef.current?.getBoundingClientRect()
@@ -55,28 +68,25 @@ export const ModalBox = ({
 				divRef.current.parentElement.getAnimations().forEach((anim) => anim.cancel())
 			}
 			const fin = finalStyles()
-			animateOuterModal({ width: fin.width, height: 0, boxShadow: '0 0 0 0 transparent', filter: initialFilter }, fin)
+			animateOuterModal({ width: fin.width, height: 0, boxShadow: '0 0 0 0 transparent', filter: MODAL_FILTER }, fin)
 		}
 
-		const closeModal = (isNested = false) => {
+		const closeModal = (swap: boolean) => {
 			if (!divRef.current?.parentElement) return
 			const outerModal = divRef.current.parentElement
 			outerModal.getAnimations().forEach((anim) => anim.cancel())
-			// Swaps close faster than a normal close
-			const duration = isNested
-				? ANIMATION_CONFIG.nestedTransition.duration
-				: ANIMATION_CONFIG.modalTransition.duration
 			const fin = finalStyles()
 			const anim = outerModal.animate(
-				[fin, { width: fin.width, height: 0, filter: initialFilter }],
-				{ duration, easing: ANIMATION_CONFIG.modalTransition.easing, fill: 'forwards' }
+				[fin, { width: fin.width, height: 0, filter: MODAL_FILTER }],
+				// Swaps close faster than a normal close
+				{ duration: swap ? swapDuration() : modalDuration(), easing: MODAL_EASING, fill: 'forwards' }
 			)
 			anim.onfinish = () => {
 				outerModal.style.visibility = 'hidden'
 			}
 		}
 
-		registerCloseAnimation((isNested?: boolean) => closeModal(isNested))
+		registerCloseAnimation(closeModal)
 
 		// Two frames: one for React to commit, one for layout, so the size we
 		// measure is real
@@ -111,14 +121,31 @@ export const ModalBox = ({
 		<Box
 			image={image}
 			icon={icon}
-			className={`rb-modal ${style.outerModal}`}
+			className={`pg-modal ${style.outerModal}`}
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby={title ? titleId : undefined}
+			aria-label={title ? undefined : ariaLabel}
 		>
 			<div
 				ref={divRef}
-				className={`rb-modal-content ${style.innerModal}${className ? ` ${className}` : ''}`}
+				className={`pg-modal-content ${style.innerModal}${className ? ` ${className}` : ''}`}
 				style={propStyle}
 			>
+				{title && (
+					<h2 id={titleId} className="pg-modal-title">
+						{title}
+					</h2>
+				)}
 				{children}
+				{closeButton && (
+					<button
+						type="button"
+						className={`pg-modal-close ${close.close} ${style.close}`}
+						aria-label={labels.close}
+						onClick={hideModal}
+					/>
+				)}
 			</div>
 		</Box>
 	)

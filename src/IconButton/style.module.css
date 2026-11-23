@@ -1,6 +1,11 @@
-@layer ricebowl {
+@layer paiger {
+	/* Same padding on every side, so the button is the icon plus that padding.
+	   Flex rather than line-height: 0 keeps the icon centred when the app
+	   resets button fonts with `font: inherit`, which also resets line-height. */
 	.button {
-		padding: 5px 8px;
-		height: 36px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: calc(var(--pg-control-padding-y) * 0.8);
 	}
 }

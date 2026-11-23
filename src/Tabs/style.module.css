@@ -1,0 +1,56 @@
+@layer paiger {
+	/* Tabs take the text colour around them, like Checkbox's label, so they
+	   read on a surface or straight on the page. The line under the list and
+	   the selected tab's underline are that colour too. */
+	.tabs {
+		font-family: var(--pg-font);
+	}
+
+	.list {
+		display: flex;
+		overflow-x: auto;
+		scrollbar-width: none;
+		box-shadow: inset 0 calc(var(--pg-border-width) * -1) 0 color-mix(in srgb, currentColor 25%, transparent);
+	}
+
+	.tab {
+		flex: none;
+		margin: 0;
+		padding: var(--pg-control-padding-y) calc(var(--pg-control-padding-x) * 0.75);
+		font: inherit;
+		font-size: var(--pg-font-size);
+		color: inherit;
+		background: none;
+		border: none;
+		border-bottom: var(--pg-border-width) solid transparent;
+		opacity: 0.65;
+		cursor: pointer;
+		transition:
+			opacity var(--pg-transition-fast),
+			border-color var(--pg-transition-fast);
+	}
+
+	.tab:hover:not(:disabled) {
+		opacity: 1;
+	}
+
+	.tab[aria-selected='true'] {
+		opacity: 1;
+		border-bottom-color: currentColor;
+	}
+
+	.tab:focus-visible,
+	.panel:focus-visible {
+		outline: 2px solid currentColor;
+		outline-offset: -2px;
+	}
+
+	.tab:disabled {
+		opacity: 0.35;
+		cursor: not-allowed;
+	}
+
+	.panel {
+		padding-top: var(--pg-control-padding-y);
+	}
+}

@@ -1,0 +1,142 @@
+@layer paiger {
+	/* The label and its box. The text takes the colour around it, since these
+	   usually sit on the page rather than on a surface. */
+	.choice {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5em;
+		font-family: var(--pg-font);
+		font-size: var(--pg-font-size);
+		cursor: pointer;
+		user-select: none;
+	}
+
+	.choice:has(:disabled) {
+		opacity: 0.7;
+		cursor: not-allowed;
+	}
+
+	/* The input itself, drawn from scratch */
+	.control {
+		appearance: none;
+		flex: none;
+		display: grid;
+		place-content: center;
+		box-sizing: border-box;
+		width: var(--pg-check-size);
+		height: var(--pg-check-size);
+		margin: 0;
+		background: var(--pg-color-main);
+		border: var(--pg-border-width) solid var(--pg-color-accent);
+		box-shadow: var(--pg-shadow);
+		cursor: inherit;
+		transition:
+			background var(--pg-transition-fast),
+			border-color var(--pg-transition-fast);
+	}
+
+	.control::before {
+		content: '';
+		box-sizing: border-box;
+	}
+
+	.choice:hover .control:not(:disabled) {
+		border-color: var(--pg-color-bright);
+	}
+
+	.control:focus-visible {
+		outline: 2px solid var(--pg-color-bright);
+		outline-offset: 2px;
+	}
+
+	.control[aria-invalid='true'] {
+		border-color: color-mix(in srgb, var(--pg-color-danger) 80%, var(--pg-color-accent));
+	}
+
+	/* On: filled with the text colour, the mark cut out in the surface colour */
+	.control:checked,
+	.checkbox:indeterminate {
+		background: var(--pg-color-bright);
+		border-color: var(--pg-color-bright);
+	}
+
+	/* Checkbox: rounded no more than a quarter of its size, so it stays a box */
+	.checkbox {
+		border-radius: min(var(--pg-radius), calc(var(--pg-check-size) / 4));
+	}
+
+	/* The tick: two sides of a box, turned */
+	.checkbox::before {
+		width: calc(var(--pg-check-size) * 0.3);
+		height: calc(var(--pg-check-size) * 0.55);
+		margin-top: -10%;
+		border: solid var(--pg-color-main);
+		border-width: 0 2px 2px 0;
+		rotate: 45deg;
+		scale: 0;
+		transition: scale var(--pg-transition-fast);
+	}
+
+	.checkbox:checked::before {
+		scale: 1;
+	}
+
+	/* Mixed: a dash */
+	.checkbox:indeterminate::before {
+		width: calc(var(--pg-check-size) * 0.5);
+		height: 0;
+		margin-top: 0;
+		border-width: 0 0 2px;
+		rotate: none;
+		scale: 1;
+	}
+
+	/* Radio: always round, the convention that tells it apart */
+	.radio {
+		border-radius: 50%;
+	}
+
+	.radio::before {
+		width: calc(var(--pg-check-size) * 0.4);
+		height: calc(var(--pg-check-size) * 0.4);
+		border-radius: 50%;
+		background: var(--pg-color-main);
+		scale: 0;
+		transition: scale var(--pg-transition-fast);
+	}
+
+	.radio:checked::before {
+		scale: 1;
+	}
+
+	/* Switch: a track twice as wide, with a knob that slides over */
+	.switch {
+		--knob: calc(var(--pg-check-size) - var(--pg-border-width) * 2 - 4px);
+		width: calc(var(--pg-check-size) * 2);
+		place-content: center start;
+		padding: 0 2px;
+		border-radius: min(var(--pg-radius), calc(var(--pg-check-size) / 2));
+	}
+
+	.switch::before {
+		width: var(--knob);
+		height: var(--knob);
+		border-radius: min(var(--pg-radius), calc(var(--knob) / 2));
+		background: var(--pg-color-accent);
+		transition:
+			translate var(--pg-transition-base),
+			background var(--pg-transition-fast);
+	}
+
+	.switch:checked::before {
+		translate: calc(var(--pg-check-size) * 2 - var(--pg-border-width) * 2 - 4px - var(--knob)) 0;
+		background: var(--pg-color-main);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.control,
+		.control::before {
+			transition: none;
+		}
+	}
+}

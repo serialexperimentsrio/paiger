@@ -1,9 +1,79 @@
-@layer ricebowl {
-	.toastProvider {
+@layer paiger {
+	/* The stack, pinned to a corner. Newest toasts sit nearest the edge.
+	   It's a popover, so undo the browser's popover styles. */
+	.stack {
 		position: fixed;
-		display: inline-block;
-		z-index: var(--rb-z-toast);
-		transition: top 0.5s cubic-bezier(0.22, 1, 0.36, 1), bottom 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+		inset: auto;
+		margin: 0;
+		padding: 0;
+		border: none;
+		background: none;
+		color: inherit;
+		overflow: visible;
+		display: flex;
+		flex-direction: column;
 		pointer-events: none;
+	}
+
+	.stack[data-y='top'] {
+		top: 0;
+		flex-direction: column-reverse;
+	}
+
+	.stack[data-y='bottom'] {
+		bottom: 0;
+	}
+
+	.stack[data-x='left'] {
+		left: 0;
+	}
+
+	.stack[data-x='right'] {
+		right: 0;
+	}
+
+	/* A new toast's slot grows from nothing, which pushes the rest of the
+	   stack along and slides the toast in from the screen edge */
+	.slot {
+		display: grid;
+		grid-template-rows: 1fr;
+		overflow: hidden;
+		transition: grid-template-rows 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	@starting-style {
+		.slot {
+			grid-template-rows: 0fr;
+		}
+	}
+
+	.slot > * {
+		min-height: 0;
+	}
+
+	/* At the top the stack grows downward, so pin each toast to the bottom
+	   of its slot; it then slides down from the edge instead of unrolling */
+	.stack[data-y='top'] .slot > * {
+		align-self: end;
+	}
+
+	/* Closing: fade out first, then the slot closes up so the rest slide
+	   over. Both lengths are set inline from the timing in the script. */
+	.slot[data-closing] {
+		grid-template-rows: 0fr;
+		opacity: 0;
+		scale: 0.96;
+		transition:
+			opacity var(--pg-toast-fade) cubic-bezier(0.4, 0, 1, 1),
+			scale var(--pg-toast-fade) cubic-bezier(0.4, 0, 1, 1),
+			grid-template-rows var(--pg-toast-collapse) ease var(--pg-toast-fade);
+	}
+
+	/* Closing just removes it */
+	@media (prefers-reduced-motion: reduce) {
+		.slot,
+		.slot[data-closing] {
+			transition: none;
+		}
 	}
 }

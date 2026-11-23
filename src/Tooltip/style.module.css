@@ -1,26 +1,33 @@
-@layer ricebowl {
+@layer paiger {
+	/* A popover, for the top layer, so undo the browser's popover styles */
 	.tooltip {
 		pointer-events: none;
 		overflow: hidden;
 		position: fixed;
+		inset: auto;
+		margin: 0;
+		padding: 0;
 		display: inline-block;
-		border: var(--rb-border-width) solid var(--rb-color-accent);
-		background-color: var(--rb-color-main);
-		color: var(--rb-color-bright);
-		z-index: var(--rb-z-tooltip);
-		border-radius: var(--rb-radius);
-		box-shadow: var(--rb-shadow);
-		font-family: var(--rb-font);
+		border: var(--pg-border-width) solid var(--pg-color-accent);
+		background-color: var(--pg-color-main);
+		color: var(--pg-color-bright);
+		border-radius: var(--pg-radius);
+		box-shadow: var(--pg-shadow);
+		font-family: var(--pg-font);
 		opacity: 1;
 		width: 0;
 		height: 0;
 	}
 
+	/* Sized by its own content, not the box (which animates from zero), and
+	   wraps once it reaches --pg-tooltip-max-width. Line breaks in the
+	   content are kept. */
 	.tooltipInner {
-		white-space: nowrap;
-		padding: 4px 8px;
+		white-space: pre-line;
+		padding: var(--pg-tooltip-padding);
 		box-sizing: content-box;
-		width: auto;
+		width: max-content;
+		max-width: var(--pg-tooltip-max-width);
 		position: absolute;
 	}
 

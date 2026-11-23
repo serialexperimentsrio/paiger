@@ -1,8 +1,8 @@
-import type { PopoverPosition } from './position'
+import type { Placement } from './position'
 import { TRANSFORMS } from './position'
 
 export const createAnimationKeyframes = (
-	position: PopoverPosition,
+	position: Placement,
 	height: number,
 	offset: number,
 	isOpening: boolean,
@@ -10,13 +10,13 @@ export const createAnimationKeyframes = (
 ): Keyframe[] => {
 	const baseTransform = TRANSFORMS[position]
 	// Centred popovers rely on translateX(-50%), so every keyframe needs it too
-	const centerPrefix = !matchTriggerWidth && (position === 'below' || position === 'above') ? 'translateX(-50%) ' : ''
+	const centerPrefix = !matchTriggerWidth && (position === 'bottom' || position === 'top') ? 'translateX(-50%) ' : ''
 
 	const offsets = {
 		left: `translateX(${offset}px)`,
 		right: `translateX(-${offset}px)`,
-		above: `translateY(${offset}px)`,
-		below: `translateY(-${offset}px)`
+		top: `translateY(${offset}px)`,
+		bottom: `translateY(-${offset}px)`
 	}
 	const offsetTransform = `${centerPrefix}${baseTransform} ${offsets[position]}`
 	const restTransform = `${centerPrefix}${baseTransform}`

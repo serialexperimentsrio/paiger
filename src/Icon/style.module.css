@@ -1,5 +1,14 @@
-@layer ricebowl {
+@layer paiger {
 	.icon {
 		user-select: none;
+	}
+
+	/* The image cuts the icon's shape out of a block of the text colour */
+	.tint {
+		display: inline-block;
+		flex: none;
+		background-color: currentColor;
+		-webkit-mask: var(--pg-icon-src) center / contain no-repeat;
+		mask: var(--pg-icon-src) center / contain no-repeat;
 	}
 }

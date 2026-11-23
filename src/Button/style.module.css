@@ -1,32 +1,40 @@
-@layer ricebowl {
-	@keyframes loading {
-		0% {
-			background-position-x: 0%;
-		}
-		100% {
-			background-position-x: 200%;
-		}
-	}
-
+@layer paiger {
 	.button {
-		background: var(--rb-color-main);
-		border: var(--rb-border-width) solid var(--rb-color-accent);
-		padding: 10px 20px;
+		background: var(--pg-color-main);
+		border: var(--pg-border-width) solid var(--pg-color-accent);
+		padding: var(--pg-control-padding-y) var(--pg-control-padding-x);
 		outline: none;
-		color: var(--rb-color-bright);
+		color: var(--pg-color-bright);
 		position: relative;
-		transition: background var(--rb-transition-fast), color 0.5s ease;
+		transition: background var(--pg-transition-fast), color 0.5s ease;
 		cursor: pointer;
-		font-size: 1rem;
+		font-size: var(--pg-font-size);
 		/* Buttons don't inherit the page font on their own */
-		font-family: var(--rb-font);
-		border-radius: var(--rb-radius);
-		box-shadow: var(--rb-shadow);
+		font-family: var(--pg-font);
+		border-radius: var(--pg-radius);
+		box-shadow: var(--pg-shadow);
 		user-select: none;
 	}
 
+	/* Sizes scale the text and padding from the medium tokens */
+	.small {
+		font-size: calc(var(--pg-font-size) * 0.875);
+		padding: calc(var(--pg-control-padding-y) * 0.6) calc(var(--pg-control-padding-x) * 0.6);
+	}
+
+	.large {
+		font-size: calc(var(--pg-font-size) * 1.125);
+		padding: calc(var(--pg-control-padding-y) * 1.4) calc(var(--pg-control-padding-x) * 1.4);
+	}
+
+	.ghost {
+		background-color: transparent;
+		border-color: transparent;
+		box-shadow: none;
+	}
+
 	.button:hover:not(:disabled):not(.loading) {
-		background-color: var(--rb-color-accent);
+		background-color: var(--pg-color-accent);
 	}
 
 	.button:active:not(:disabled):not(.loading) {
@@ -34,62 +42,26 @@
 	}
 
 	.button:focus-visible {
-		outline: 2px solid var(--rb-color-bright);
+		outline: 2px solid var(--pg-color-bright);
 		outline-offset: 3px;
 	}
 
 	.button:disabled {
 		opacity: 0.7;
-		color: var(--rb-color-dim);
+		color: var(--pg-color-dim);
 		cursor: not-allowed;
 	}
 
-	.button::after,
-	.button::before {
-		content: '';
-		position: absolute;
-		bottom: calc(var(--rb-border-width) * -1);
-		left: calc(var(--rb-border-width) * -1);
-		right: calc(var(--rb-border-width) * -1);
-		height: var(--rb-border-width);
-		background: linear-gradient(
-			90deg,
-			transparent 0%,
-			transparent 50%,
-			var(--rb-color-bright) 50%,
-			var(--rb-color-bright) 100%
-		);
-		background-size: 200%;
-		background-repeat: repeat;
-		transition: opacity 0.5s ease;
-		opacity: 0;
-	}
-
-	.button::before {
-		top: calc(var(--rb-border-width) * -1);
-		transform: scale(-1);
-	}
-
+	/* The border sweep itself comes from sweep.module.css */
 	.button.loading {
-		color: var(--rb-color-bright);
+		color: var(--pg-color-bright);
 		opacity: 0.7;
 		pointer-events: none;
-	}
-
-	/* Only animate while loading, not forever on every idle button */
-	.button.loading::after,
-	.button.loading::before {
-		opacity: 0.2;
-		animation: loading 2s ease infinite;
-	}
-
-	.button.loading::before {
-		animation-delay: 1s;
 	}
 
 	/* The danger colour is see-through, so lay it over the normal background
 	   colour as an image. Hover only swaps the colour underneath. */
 	.button.danger {
-		background-image: linear-gradient(var(--rb-color-danger), var(--rb-color-danger));
+		background-image: linear-gradient(var(--pg-color-danger), var(--pg-color-danger));
 	}
 }

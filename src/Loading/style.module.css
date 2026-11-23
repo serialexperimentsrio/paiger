@@ -1,35 +1,79 @@
-@layer ricebowl {
-	.loadingAnimation {
+@layer paiger {
+	/* Sits in the text like a word, vertically centred on the line */
+	.loading {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--pg-loading-gap);
+		vertical-align: middle;
+		color: var(--pg-color-bright);
+		user-select: none;
+	}
+
+	.loading.center {
 		position: absolute;
 		left: 50%;
 		top: 50%;
 		transform: translate(-50%, -50%);
-		user-select: none;
 	}
 
-	.loadingAnimation.inline {
-		position: relative;
-		left: 0;
-		top: 2px;
-		transform: none;
+	/* Drawn boxes rather than "." characters, so the size is exact in any font.
+	   They follow --pg-radius, and currentColor lets `color` restyle them. */
+	.dot {
+		width: var(--pg-loading-size);
+		height: var(--pg-loading-size);
+		border-radius: var(--pg-radius);
+		background: currentColor;
+		opacity: 0.25;
+		animation: wave var(--pg-loading-speed) ease-in-out infinite;
 	}
 
-	.loadingAnimation i {
-		position: relative;
-		top: -7px;
-		left: 3px;
-		color: var(--rb-color-bright);
-		font-size: 16px;
-		padding-right: 4px;
-		animation: loadingDot 0.4s ease infinite alternate-reverse;
+	/* Each dot starts a sixth of a cycle after the one before, so the peak
+	   travels left to right */
+	.dot:nth-child(2) {
+		animation-delay: calc(var(--pg-loading-speed) / 6);
 	}
 
-	@keyframes loadingDot {
-		from {
-			opacity: 0.2;
+	.dot:nth-child(3) {
+		animation-delay: calc(var(--pg-loading-speed) / 3);
+	}
+
+	@keyframes wave {
+		0%,
+		60%,
+		100% {
+			opacity: 0.25;
+			transform: none;
 		}
-		to {
+		30% {
 			opacity: 1;
+			transform: translateY(-40%);
+		}
+	}
+
+	/* No movement, just a slower fade */
+	@keyframes fade {
+		0%,
+		60%,
+		100% {
+			opacity: 0.25;
+		}
+		30% {
+			opacity: 1;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.dot {
+			animation-name: fade;
+			animation-duration: calc(var(--pg-loading-speed) * 2);
+		}
+
+		.dot:nth-child(2) {
+			animation-delay: calc(var(--pg-loading-speed) / 3);
+		}
+
+		.dot:nth-child(3) {
+			animation-delay: calc(var(--pg-loading-speed) * 2 / 3);
 		}
 	}
 }

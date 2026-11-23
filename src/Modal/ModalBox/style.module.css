@@ -1,29 +1,27 @@
-@layer ricebowl {
+@layer paiger {
 	/* Doubled class outranks Box's own .box rule */
 	.outerModal.outerModal {
 		position: fixed;
 		left: 50%;
 		top: 50%;
 		transform: translate(-50%, -50%);
-		max-width: calc(100vw - 70px);
-		max-height: calc(100vh - 70px);
+		max-width: calc(100vw - var(--pg-modal-margin) * 2);
+		max-height: calc(100dvh - var(--pg-modal-margin) * 2);
 		overflow: hidden;
-		z-index: var(--rb-z-modal);
+		z-index: var(--pg-z-modal);
 		padding: 0;
 		border: none;
 		/* Border as an inset shadow, so it survives the size animation */
 		box-shadow:
-			inset 0 0 0 var(--rb-border-width) var(--rb-color-accent),
-			var(--rb-shadow);
+			inset 0 0 0 var(--pg-border-width) var(--pg-color-accent),
+			var(--pg-shadow);
 	}
 
+	/* Only the content: the Box's image and icon keep their own placement */
 	.innerModal {
-		padding: 20px;
-	}
-
-	.outerModal > * {
-		max-width: calc(100vw - 110px);
-		max-height: calc(100vh - 110px);
+		padding: var(--pg-padding);
+		max-width: calc(100vw - var(--pg-modal-margin) * 2 - var(--pg-padding) * 2);
+		max-height: calc(100dvh - var(--pg-modal-margin) * 2 - var(--pg-padding) * 2);
 		text-align: center;
 		position: absolute;
 		left: calc(50% + 0.5px);
@@ -32,8 +30,15 @@
 		overflow: auto;
 	}
 
-	.outerModal > * > h2 {
+	.innerModal > h2 {
 		margin-bottom: 30px;
+	}
+
+	/* The × sits in the corner, over the padding */
+	.close {
+		position: absolute;
+		top: 4px;
+		right: 4px;
 	}
 
 	@media (max-width: 768px) {
@@ -41,7 +46,7 @@
 			max-width: calc(100vw - 10px);
 		}
 
-		.outerModal > * {
+		.innerModal {
 			max-width: calc(100vw - 50px);
 		}
 	}

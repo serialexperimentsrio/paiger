@@ -1,4 +1,4 @@
-export type PopoverPosition = 'above' | 'below' | 'left' | 'right'
+export type Placement = 'top' | 'bottom' | 'left' | 'right'
 
 export const POPOVER_CONFIG = {
 	viewportPadding: 20,
@@ -7,17 +7,14 @@ export const POPOVER_CONFIG = {
 		small: 10,
 		medium: 20
 	},
-	animation: {
-		duration: 300,
-		fill: 'forwards' as const,
-		easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
-	}
+	// Duration comes from --pg-duration-popover
+	easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
 }
 
 // Where each side ends up once the animation is done
 export const TRANSFORMS = {
-	above: 'translateY(-100%)',
-	below: 'none',
+	top: 'translateY(-100%)',
+	bottom: 'none',
 	left: 'translateX(-100%) translateY(-50%)',
 	right: 'translateY(-50%)'
 } as const
@@ -34,7 +31,7 @@ export const isInsideFixedContainer = (element: Element): boolean => {
 }
 
 export const createPositionStyle = (
-	position: PopoverPosition,
+	position: Placement,
 	rect: DOMRect,
 	spacing: number,
 	padding: number,
@@ -46,7 +43,6 @@ export const createPositionStyle = (
 ) => {
 	const base = {
 		position: useFixed ? ('fixed' as const) : ('absolute' as const),
-		zIndex: 'var(--rb-z-popover)',
 		visibility: 'visible' as const,
 		opacity: 1,
 		contain: 'layout' as const
@@ -66,19 +62,19 @@ export const createPositionStyle = (
 	const centeredLeft = `clamp(${padding + width / 2}px, ${x + rect.width / 2}px, calc(100vw - ${padding}px - ${width / 2}px + ${scrollOffsetX}px))`
 
 	const positions = {
-		above: {
+		top: {
 			...base,
 			left: matchTriggerWidth ? `${Math.round(x)}px` : centeredLeft,
 			top: `${y - spacing}px`,
-			transform: matchTriggerWidth ? TRANSFORMS.above : `translateX(-50%) ${TRANSFORMS.above}`,
+			transform: matchTriggerWidth ? TRANSFORMS.top : `translateX(-50%) ${TRANSFORMS.top}`,
 			...(matchTriggerWidth ? { minWidth: triggerWidth } : {}),
 			maxWidth
 		},
-		below: {
+		bottom: {
 			...base,
 			left: matchTriggerWidth ? `${Math.round(x)}px` : centeredLeft,
 			top: `${y + rect.height + spacing}px`,
-			transform: matchTriggerWidth ? TRANSFORMS.below : 'translateX(-50%)',
+			transform: matchTriggerWidth ? TRANSFORMS.bottom : 'translateX(-50%)',
 			...(matchTriggerWidth ? { minWidth: triggerWidth } : {}),
 			maxWidth
 		},
@@ -100,18 +96,18 @@ export const createPositionStyle = (
 		}
 	}
 
-	return positions[position] || positions.below
+	return positions[position]
 }
 
-export const getAvailableSpace = (triggerRect: DOMRect, padding: number) => ({
-	above: triggerRect.top - padding,
-	below: window.innerHeight - (triggerRect.top + triggerRect.height) - padding,
+const getAvailableSpace = (triggerRect: DOMRect, padding: number) => ({
+	top: triggerRect.top - padding,
+	bottom: window.innerHeight - (triggerRect.top + triggerRect.height) - padding,
 	left: triggerRect.left - padding,
 	right: window.innerWidth - (triggerRect.left + triggerRect.width) - padding
 })
 
-export const checkPositionFit = (
-	position: PopoverPosition,
+const checkPositionFit = (
+	position: Placement,
 	triggerRect: DOMRect,
 	size: { width: number; height: number },
 	padding: number,
@@ -121,7 +117,7 @@ export const checkPositionFit = (
 	const space = getAvailableSpace(triggerRect, padding)
 	const { triggerSpacing } = POPOVER_CONFIG
 
-	if (position === 'above' || position === 'below') {
+	if (position === 'top' || position === 'bottom') {
 		const hasVerticalSpace = space[position] >= size.height + triggerSpacing
 		const hasHorizontalSpace =
 			triggerRect.left >= padding &&
@@ -148,32 +144,25 @@ export const determinePosition = (
 	size: { width: number; height: number } | null,
 	scrollTop: number,
 	useFixed: boolean,
-	above?: boolean,
-	below?: boolean,
-	left?: boolean,
-	right?: boolean,
-	smartPositions?: PopoverPosition[]
-): PopoverPosition => {
+	placement?: Placement,
+	autoPlacements?: Placement[]
+): Placement => {
 	// An explicit side always wins
-	if (right) return 'right'
-	if (left) return 'left'
-	if (below) return 'below'
-	if (above) return 'above'
-
-	if (!size) return 'below'
+	if (placement) return placement
+	if (!size) return 'bottom'
 
 	const { viewportPadding: padding, triggerSpacing: spacing } = POPOVER_CONFIG
 
-	// Prefer a side where it fits completely, then below, above, right, left
-	const testPositions: PopoverPosition[] = smartPositions || ['below', 'above', 'right', 'left']
-	const positionScores: Array<{ position: PopoverPosition; score: number; fits: boolean }> = []
+	// Prefer a side where it fits completely, then bottom, top, right, left
+	const testPositions: Placement[] = autoPlacements || ['bottom', 'top', 'right', 'left']
+	const positionScores: Array<{ position: Placement; score: number; fits: boolean }> = []
 
 	for (const position of testPositions) {
 		const fits = checkPositionFit(position, triggerRect, size, padding, scrollTop, useFixed)
 
 		let score = 0
-		if (position === 'below') score += 1000
-		else if (position === 'above') score += 900
+		if (position === 'bottom') score += 1000
+		else if (position === 'top') score += 900
 		else if (position === 'right') score += 800
 		else if (position === 'left') score += 700
 
@@ -181,7 +170,7 @@ export const determinePosition = (
 
 		const availableSpace = getAvailableSpace(triggerRect, padding)[position]
 		const sizeNeeded =
-			position === 'below' || position === 'above'
+			position === 'bottom' || position === 'top'
 				? size.height + spacing
 				: size.width + spacing
 		score += Math.min(1, sizeNeeded / availableSpace) * 100
@@ -195,5 +184,5 @@ export const determinePosition = (
 		return b.score - a.score
 	})
 
-	return positionScores[0]?.position || 'below'
+	return positionScores[0]?.position || 'bottom'
 }

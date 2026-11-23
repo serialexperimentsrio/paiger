@@ -1,19 +1,23 @@
-import type { ComponentProps, ReactElement } from 'react'
-import { Button } from '../Button'
-import type { Icon } from '../Icon'
+import type { ForwardedRef, ReactElement } from 'react'
+import { forwardRef } from 'react'
+import { Button, type ButtonProps } from '../Button'
+import type { IconProps } from '../Icon'
 import style from './style.module.css'
 
-export const IconButton = (
-	props: ComponentProps<typeof Button> & {
-		children: ReactElement<ComponentProps<typeof Icon>>
-	}
-) => {
+// Square, so its size comes from the icon; `size` doesn't apply
+export interface IconButtonProps extends Omit<ButtonProps, 'size'> {
+	children: ReactElement<IconProps>
+}
+
+export const IconButton = /* @__PURE__ */ forwardRef(function IconButton(
+	{ className, ...rest }: IconButtonProps,
+	ref: ForwardedRef<HTMLButtonElement>
+) {
 	return (
 		<Button
-			{...props}
-			className={`rb-icon-button ${style.button} ${props.className ?? ''}`}
-		>
-			{props.children}
-		</Button>
+			{...rest}
+			ref={ref}
+			className={`pg-icon-button ${style.button}${className ? ` ${className}` : ''}`}
+		/>
 	)
-}
+})

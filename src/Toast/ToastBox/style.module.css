@@ -1,54 +1,75 @@
-@layer ricebowl {
+@layer paiger {
+	/* Message, then the optional action and × along the top */
 	.toast {
-		display: block;
-		white-space: pre-wrap;
-		width: 300px;
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		width: var(--pg-toast-width);
 		margin: 10px;
-		top: 0px;
-		position: relative;
-		opacity: 1;
 		pointer-events: auto;
-		word-wrap: break-word;
 	}
 
-	.toast p {
+	.message {
+		flex: 1;
+		min-width: 0;
+		white-space: pre-wrap;
+		overflow-wrap: break-word;
+	}
+
+	.message > p {
 		margin: 0;
 	}
 
-	/* Set inline from FADE_MS, which also decides when the toast is removed */
-	.toast.closing {
-		opacity: 0;
-		transform: scale(0.96);
-		transition:
-			opacity var(--rb-toast-fade) cubic-bezier(0.4, 0, 1, 1),
-			transform var(--rb-toast-fade) cubic-bezier(0.4, 0, 1, 1);
+	.action {
+		flex: none;
+		padding: 0;
+		border: none;
+		background: none;
+		color: var(--pg-color-bright);
+		font: inherit;
+		cursor: pointer;
+		font-weight: 600;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	/* The × itself comes from close.module.css. Centre it on the first line
+	   of the message (1lh is that line's height) and pull it to the edge. */
+	.dismiss {
+		flex: none;
+		position: relative;
+		font: inherit;
+		margin: calc((1lh - 24px) / 2) -8px calc((1lh - 24px) / 2) 0;
+	}
+
+	.action:hover {
+		opacity: 0.8;
+	}
+
+	.action:focus-visible {
+		outline: 2px solid var(--pg-color-bright);
+		outline-offset: 2px;
 	}
 
 	/* Same trick as the danger button: tint on top, solid colour underneath,
 	   so nothing shows through */
 	.toast[data-type='error'] {
-		background-image: linear-gradient(var(--rb-color-danger), var(--rb-color-danger));
-		border-color: color-mix(in srgb, var(--rb-color-danger) 80%, var(--rb-color-accent));
+		background-image: linear-gradient(var(--pg-color-danger), var(--pg-color-danger));
+		border-color: color-mix(in srgb, var(--pg-color-danger) 80%, var(--pg-color-accent));
 	}
 
 	.toast[data-type='warning'] {
-		background-image: linear-gradient(var(--rb-color-warning), var(--rb-color-warning));
-		border-color: color-mix(in srgb, var(--rb-color-warning) 80%, var(--rb-color-accent));
+		background-image: linear-gradient(var(--pg-color-warning), var(--pg-color-warning));
+		border-color: color-mix(in srgb, var(--pg-color-warning) 80%, var(--pg-color-accent));
 	}
 
 	.toast[data-type='success'] {
-		background-image: linear-gradient(var(--rb-color-success), var(--rb-color-success));
-		border-color: color-mix(in srgb, var(--rb-color-success) 80%, var(--rb-color-accent));
+		background-image: linear-gradient(var(--pg-color-success), var(--pg-color-success));
+		border-color: color-mix(in srgb, var(--pg-color-success) 80%, var(--pg-color-accent));
 	}
 
 	.toast[data-type='info'] {
-		background: color-mix(in srgb, var(--rb-color-accent) 40%, var(--rb-color-main));
-		border-color: var(--rb-color-accent);
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.toast.closing {
-			transform: none;
-		}
+		background: color-mix(in srgb, var(--pg-color-accent) 40%, var(--pg-color-main));
+		border-color: var(--pg-color-accent);
 	}
 }

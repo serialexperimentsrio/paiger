@@ -1,13 +1,14 @@
-@layer ricebowl {
+@layer paiger {
 	.dropdown {
 		width: 100%;
 		box-sizing: border-box;
 		overflow: hidden;
-		background: var(--rb-color-main);
-		border: var(--rb-border-width) solid var(--rb-color-accent);
-		border-radius: var(--rb-radius);
-		box-shadow: var(--rb-shadow);
-		font-family: var(--rb-font);
+		background: var(--pg-color-main);
+		border: var(--pg-border-width) solid var(--pg-color-accent);
+		border-radius: var(--pg-radius);
+		box-shadow: var(--pg-shadow);
+		font-family: var(--pg-font);
+		font-size: var(--pg-font-size);
 	}
 
 	.dropdown > div {
@@ -15,18 +16,20 @@
 		overflow: hidden;
 		white-space: nowrap;
 		position: relative;
-		padding: 13px 15px;
-		border-bottom: var(--rb-border-width) solid var(--rb-color-accent);
-		transition: background var(--rb-transition-fast), color var(--rb-transition-base), opacity var(--rb-transition-base);
+		padding: calc(var(--pg-control-padding-y) * 1.3) calc(var(--pg-control-padding-x) * 0.75);
+		border-bottom: var(--pg-border-width) solid var(--pg-color-accent);
+		/* The busy sweep runs just inside the edges, since the item clips */
+		--pg-sweep-offset: 0px;
+		transition: background var(--pg-transition-fast), color var(--pg-transition-base), opacity var(--pg-transition-base);
 	}
 
 	.dropdown > div > span {
-		transition: color var(--rb-transition-base), opacity var(--rb-transition-base);
+		transition: color var(--pg-transition-base), opacity var(--pg-transition-base);
 	}
 
 	.dropdown > div:hover,
 	.dropdown > div:focus-visible {
-		background: var(--rb-color-accent);
+		background: var(--pg-color-accent);
 	}
 
 	.dropdown > div:last-child {

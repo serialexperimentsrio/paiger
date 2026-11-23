@@ -1,115 +1,138 @@
-import { Loading } from '../Loading'
-import { useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Popover } from '../Popover'
-import type { PopoverPosition } from '../Popover/position'
+import type { Placement } from '../Popover/position'
 import style from './style.module.css'
+import sweep from '../sweep.module.css'
 
-interface DropdownItem {
-	key: string
-	label: string
-	onPick: () => unknown
-}
+type ListItem = { key: string; label: string }
 
-function DropdownContent({
+// The list inside Dropdown (a menu of actions) and Select (a listbox of
+// choices). Arrow keys, Home and End move, typing jumps to a matching label,
+// and Enter or Space picks. An async onPick shows the busy sweep on that item.
+export function List({
 	items,
+	role,
+	selectedKey,
+	onPick,
 	close
 }: {
-	items: DropdownItem[]
+	items: ListItem[]
+	role: 'menu' | 'listbox'
+	selectedKey?: string
+	onPick: (key: string) => unknown
 	close: () => void
 }) {
-	const [loadingIndex, setLoadingIndex] = useState<undefined | number>(undefined)
-	const [focusedIndex, setFocusedIndex] = useState<number>(0)
+	const selectedIndex = Math.max(0, items.findIndex((item) => item.key === selectedKey))
+	const [loadingIndex, setLoadingIndex] = useState<number>()
+	const [focusedIndex, setFocusedIndex] = useState(selectedIndex)
 	const itemRefs = useRef<(HTMLDivElement | null)[]>([])
+	const typed = useRef({ text: '', at: 0 })
+
+	const move = (index: number) => {
+		setFocusedIndex(index)
+		itemRefs.current[index]?.focus()
+	}
 
 	const pick = async (index: number) => {
 		if (loadingIndex != null) return
 		setLoadingIndex(index)
 		try {
-			await items[index].onPick()
+			await onPick(items[index].key)
 			close()
 		} finally {
 			setLoadingIndex(undefined)
 		}
 	}
 
-	const handleKeyDown = (e: React.KeyboardEvent) => {
-		if (e.key === 'ArrowDown') {
+	const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+		const last = items.length - 1
+		const target = {
+			ArrowDown: Math.min(index + 1, last),
+			ArrowUp: Math.max(index - 1, 0),
+			Home: 0,
+			End: last
+		}[e.key]
+		// Mid-search, a space is part of the text, e.g. "new york"
+		const now = Date.now()
+		const searching = now - typed.current.at < 500 && typed.current.text !== ''
+		if (target !== undefined) {
 			e.preventDefault()
-			const next = Math.min(focusedIndex + 1, items.length - 1)
-			setFocusedIndex(next)
-			itemRefs.current[next]?.focus()
-		} else if (e.key === 'ArrowUp') {
+			move(target)
+		} else if (e.key === 'Enter' || (e.key === ' ' && !searching)) {
 			e.preventDefault()
-			const prev = Math.max(focusedIndex - 1, 0)
-			setFocusedIndex(prev)
-			itemRefs.current[prev]?.focus()
-		} else if (e.key === 'Escape') {
-			close()
+			pick(index)
+		} else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+			// Letters typed in quick succession build up a prefix to jump to
+			e.preventDefault()
+			typed.current.text = (searching ? typed.current.text : '') + e.key.toLowerCase()
+			typed.current.at = now
+			const match = items.findIndex((item) => item.label.toLowerCase().startsWith(typed.current.text))
+			if (match >= 0) move(match)
 		}
 	}
 
 	return (
-		<div className={`rb-dropdown ${style.dropdown}`} role="listbox" onKeyDown={handleKeyDown}>
-			{items.map((item, index) => (
-				<div
-					key={item.key}
-					ref={(el) => { itemRefs.current[index] = el }}
-					className="rb-dropdown-item"
-					data-loading={loadingIndex === index || undefined}
-					role="option"
-					aria-selected={false}
-					aria-busy={loadingIndex === index}
-					tabIndex={focusedIndex === index ? 0 : -1}
-					style={{ pointerEvents: loadingIndex != null ? 'none' : undefined }}
-					onClick={() => pick(index)}
-					onKeyDown={(e) => {
-						if (e.key === 'Enter' || e.key === ' ') {
-							e.preventDefault()
-							pick(index)
-						}
-					}}
-				>
-					<span
-						style={{
-							opacity:
-								(loadingIndex != null &&
-									(loadingIndex === index ? 0.3 : 0.7)) ||
-								1
+		<div className={`pg-dropdown ${style.dropdown}`} role={role}>
+			{items.map((item, index) => {
+				const loading = loadingIndex === index
+				return (
+					<div
+						key={item.key}
+						ref={(el) => {
+							itemRefs.current[index] = el
 						}}
+						className={`pg-dropdown-item ${sweep.sweep}${loading ? ` ${sweep.active}` : ''}`}
+						data-loading={loading || undefined}
+						role={role === 'menu' ? 'menuitem' : 'option'}
+						aria-selected={role === 'listbox' ? item.key === selectedKey : undefined}
+						aria-busy={loading || undefined}
+						tabIndex={focusedIndex === index ? 0 : -1}
+						style={{ pointerEvents: loadingIndex != null ? 'none' : undefined }}
+						onClick={() => pick(index)}
+						onKeyDown={(e) => handleKeyDown(e, index)}
 					>
-						{item.label}
-					</span>
-					{loadingIndex === index && <Loading />}
-				</div>
-			))}
+						{/* While one item works, it stays readable and the rest fade back */}
+						<span style={{ opacity: loadingIndex == null ? 1 : loading ? 0.7 : 0.4 }}>{item.label}</span>
+					</div>
+				)
+			})}
 		</div>
 	)
 }
 
-export function Dropdown({
-	children,
-	items,
-	above,
-	smartPositions,
-	onOpenChange
-}: {
+export interface DropdownItem {
+	key: string
+	label: string
+	// Return a promise to keep the menu open, with the item busy, until it settles
+	onSelect: () => unknown
+}
+
+export interface DropdownProps {
+	// The trigger. It needs to accept a ref.
 	children: React.ReactElement
 	items: DropdownItem[]
-	above?: boolean
-	smartPositions?: PopoverPosition[]
+	placement?: Placement
+	autoPlacements?: Placement[]
 	onOpenChange?: (open: boolean) => void
-}) {
+}
+
+export function Dropdown({ children, items, placement, autoPlacements, onOpenChange }: DropdownProps) {
 	return (
 		<Popover
-			above={above}
-			smartPositions={smartPositions}
+			placement={placement}
+			autoPlacements={autoPlacements}
 			onOpenChange={onOpenChange}
 			matchTriggerWidth
-			content={(closePopover) => (
-				<DropdownContent items={items} close={closePopover} />
+			content={(close) => (
+				<List
+					items={items}
+					role="menu"
+					onPick={(key) => items.find((item) => item.key === key)?.onSelect()}
+					close={close}
+				/>
 			)}
 		>
-			{children}
+			{React.cloneElement(children as React.ReactElement<Record<string, unknown>>, { 'aria-haspopup': 'menu' })}
 		</Popover>
 	)
 }
