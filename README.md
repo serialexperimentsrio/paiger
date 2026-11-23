@@ -12,8 +12,14 @@ The demo's ornamental style is one theme built on these components; the defaults
 
 ## Quick start
 
+paiger isn't on npm yet. Until it is, build a tarball from this repo and install that:
+
 ```bash
-npm install paiger
+git clone https://github.com/serialexperimentsrio/paiger.git
+cd paiger
+bun install && bun run build && npm pack
+# then, in your app:
+npm install ../paiger/paiger-0.5.0.tgz
 ```
 
 ```tsx
