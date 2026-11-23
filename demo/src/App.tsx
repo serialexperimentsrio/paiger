@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, Button, Select, modalActive, toast } from 'ricebowl'
+import { Box, Button, IconButton, Loading, Select, Tooltip, isModalOpen, toast } from 'paiger'
 import pkg from '../../package.json'
-import { Frame, Glyph } from './ornaments'
-import { CategoryScreens, FACES, GLYPHS, Plate, SCREENS, Screen, copy, sleep } from './sections'
+import { Frame, Glyph, Mark } from './ornaments'
+import { CategoryScreens, FACES, GLYPHS, Ico, Plate, SCREENS, Screen, copy, sleep } from './sections'
 import { PRESETS, applyTheme, toCss, type PresetName, type Rgba, type Theme } from './themes'
 
-const GITHUB = 'https://github.com/serialexperimentsrio/ricebowl'
-const NPM = 'https://www.npmjs.com/package/ricebowl'
+const GITHUB = 'https://github.com/serialexperimentsrio/paiger'
+const NPM = 'https://www.npmjs.com/package/paiger'
 const PRESET_NAMES = Object.keys(PRESETS) as PresetName[]
 const ORDER = ['top', ...SCREENS.map((s) => s.id)]
 
@@ -26,7 +26,12 @@ export default function App() {
 		// Whichever screen crosses the middle of the viewport is the active one.
 		// A zero-height line works even for screens taller than the viewport.
 		const spy = new IntersectionObserver(
-			(entries) => entries.forEach((e) => e.isIntersecting && setActive(e.target.id)),
+			(entries) =>
+				entries.forEach((e) => {
+					// Lets CSS play a screen's entrance each time it comes into view
+					e.target.toggleAttribute('data-active', e.isIntersecting)
+					if (e.isIntersecting) setActive(e.target.id)
+				}),
 			{ rootMargin: '-50% 0px -50% 0px' }
 		)
 		document.querySelectorAll('main > section').forEach((el) => spy.observe(el))
@@ -39,7 +44,7 @@ export default function App() {
 	// Q / E step through the screens; Enter starts from the title screen
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
-			if (e.ctrlKey || e.metaKey || e.altKey || modalActive || isTyping(e.target)) return
+			if (e.ctrlKey || e.metaKey || e.altKey || isModalOpen() || isTyping(e.target)) return
 			const i = ORDER.indexOf(active)
 			const key = e.key.toLowerCase()
 			if (key === 'q' && i > 0) goTo(ORDER[i - 1])
@@ -67,11 +72,8 @@ export default function App() {
 			<div className="backdrop" data-screen={active} aria-hidden="true" />
 			<div className="grain-overlay" aria-hidden="true" />
 			<Frame />
-			<a className="lockup" href="#top" data-hidden={active === 'top' || undefined} aria-label="Ricebowl, back to the title">
-				<span className="kanji" aria-hidden="true">
-					茶碗
-				</span>
-				<span className="latin">Ricebowl</span>
+			<a className="lockup" href="#top" data-hidden={active === 'top' || undefined} aria-label="Paiger, back to the title">
+				<Mark />
 			</a>
 			<main>
 				<Title />
@@ -84,7 +86,7 @@ export default function App() {
 	)
 }
 
-/* ───────── Chapter list ───────── */
+/* Chapter list */
 
 function Chapters({ active }: { active: string }) {
 	const list = useRef<HTMLUListElement>(null)
@@ -113,7 +115,7 @@ function Chapters({ active }: { active: string }) {
 	)
 }
 
-/* ───────── Title ───────── */
+/* Title */
 
 const MENU: { label: string; href: string; external?: boolean }[] = [
 	{ label: 'Components', href: '#buttons' },
@@ -127,17 +129,14 @@ function Title() {
 		<section id="top" className="screen title" aria-labelledby="title-heading">
 			<div className="title-copy">
 			<h1 id="title-heading" className="wordmark">
-				<span className="kanji" aria-hidden="true">
-					茶碗
-				</span>
-				<span className="latin">Ricebowl</span>
+				<Mark />
 			</h1>
 			<p className="meta">
 				React component library <i aria-hidden="true">◆</i> v{pkg.version} <i aria-hidden="true">◆</i> {pkg.license}
 			</p>
 			<div className="cmd">
-				<code>npm install ricebowl</code>
-				<button className="link-btn" onClick={() => copy('npm install ricebowl')}>
+				<code>npm install paiger</code>
+				<button className="link-btn" onClick={() => copy('npm install paiger')}>
 					Copy
 				</button>
 			</div>
@@ -153,7 +152,7 @@ function Title() {
 	)
 }
 
-/* ───────── Theme ───────── */
+/* Theme */
 
 function ColorRow({
 	name,
@@ -176,7 +175,7 @@ function ColorRow({
 					onChange={(e) => onChange(typeof value === 'string' ? e.target.value : { ...value, hex: e.target.value })}
 				/>
 			</span>
-			<label htmlFor={id}>--rb-color-{name}</label>
+			<label htmlFor={id}>--pg-color-{name}</label>
 			{typeof value === 'string' ? (
 				<code className="tok-val">{hex}</code>
 			) : (
@@ -254,12 +253,27 @@ function ThemeScreen({
 					</div>
 					<div className="row">
 						<Select
-							options={FACES.slice(0, 3).map((f, i) => ({ key: f.key, name: f.name, default: i === 0 }))}
+							aria-label="Typeface"
+							options={FACES.slice(0, 3).map((f) => ({ value: f.key, label: f.name }))}
 						/>
 						<Box className="specimen-box">
 							<p>Bright text</p>
-							<p className="dim">Dim text</p>
+							<p className="dim">
+								Loading <Loading />
+							</p>
 						</Box>
+					</div>
+					<div className="row">
+						<Tooltip content="Favourite" placement="top">
+							<IconButton aria-label="Favourite" onClick={() => sleep(900)}>
+								<Ico name="heart" />
+							</IconButton>
+						</Tooltip>
+						<Tooltip content="Delete" placement="top">
+							<IconButton aria-label="Delete" danger onClick={() => sleep(900)}>
+								<Ico name="trash" />
+							</IconButton>
+						</Tooltip>
 					</div>
 					<div className="row">
 						{(['success', 'warning', 'error'] as const).map((t) => (
@@ -275,8 +289,8 @@ function ThemeScreen({
 				{colorKeys.map((k) => (
 					<ColorRow key={k} name={k} value={theme[k]} onChange={(v) => onEdit({ [k]: v } as Partial<Theme>)} />
 				))}
-				<SizeRow token="--rb-border-width" value={theme.border} max={6} onChange={(border) => onEdit({ border })} />
-				<SizeRow token="--rb-radius" value={theme.radius} max={16} onChange={(radius) => onEdit({ radius })} />
+				<SizeRow token="--pg-border-width" value={theme.border} max={6} onChange={(border) => onEdit({ border })} />
+				<SizeRow token="--pg-radius" value={theme.radius} max={16} onChange={(radius) => onEdit({ radius })} />
 			</div>
 
 			<div className="usage">
@@ -286,7 +300,7 @@ function ThemeScreen({
 	)
 }
 
-/* ───────── Install ───────── */
+/* Install */
 
 function Install() {
 	return (
@@ -300,10 +314,13 @@ function Install() {
 				<Glyph text={GLYPHS.install} />
 				<ol className="steps">
 					<li>
-						<Plate label="Add the package" code="npm install ricebowl" />
+						<Plate label="Add the package" code="npm install paiger" />
 					</li>
 					<li>
-						<Plate label="Import the stylesheet once" code={`import { Button } from 'ricebowl'\nimport 'ricebowl/styles.css'`} />
+						<Plate
+							label="Set up once, at the root"
+							code={`import 'paiger/styles.css'\nimport { PaigerProvider } from 'paiger'\n\n<PaigerProvider>\n  <App />\n</PaigerProvider>`}
+						/>
 					</li>
 				</ol>
 			</div>

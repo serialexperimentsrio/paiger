@@ -2,14 +2,20 @@ import { useRef, useState, type ComponentType, type ReactNode } from 'react'
 import {
 	Box,
 	Button,
+	Checkbox,
 	Dropdown,
 	Icon,
 	IconButton,
+	Input,
 	Loading,
 	ModalBox,
 	Panel,
 	Popover,
+	Radio,
 	Select,
+	Switch,
+	Tabs,
+	Textarea,
 	ToastBox,
 	Tooltip,
 	hideModal,
@@ -19,14 +25,14 @@ import {
 	setToastVisibility,
 	toast,
 	type ToastType
-} from 'ricebowl'
+} from 'paiger'
 import { Notes, type Note } from './notes'
 import { Glyph } from './ornaments'
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 export const Ico = ({ name, size = 18 }: { name: string; size?: number }) => (
-	<Icon src={`icons/${name}.svg`} width={size} className="ico" alt="" />
+	<Icon src={`icons/${name}.svg`} width={size} tint />
 )
 
 export const copy = async (text: string, label = 'Copied to clipboard') => {
@@ -41,7 +47,7 @@ export const copy = async (text: string, label = 'Copied to clipboard') => {
 // Tiny highlighter: comments, strings, JSX tags and a few keywords
 const TOKEN = /(\/\/.*$)|('[^']*'|"[^"]*")|(<\/?[A-Za-z]+|\/?>)|\b(await|async|const|import|from|return)\b/gm
 
-export function Code({ children }: { children: string }) {
+function Code({ children }: { children: string }) {
 	const parts: ReactNode[] = []
 	let last = 0
 	for (const m of children.matchAll(TOKEN)) {
@@ -62,7 +68,7 @@ export function Code({ children }: { children: string }) {
 	)
 }
 
-/** A code plate with a label and a copy button */
+/** Code block with a label and a copy button */
 export function Plate({ label, code }: { label: string; code: string }) {
 	return (
 		<div className="plate">
@@ -95,7 +101,7 @@ export function Screen({
 	)
 }
 
-/* ───────── Component cards ───────── */
+/* Component screens */
 
 type Item = {
 	key: string
@@ -116,15 +122,16 @@ type Category = {
 	items: Item[]
 }
 
-/** The kanji behind each card: button, layer, menu, surface, whole, colour, install */
+/** The letter behind each screen */
 export const GLYPHS: Record<string, string> = {
-	buttons: '釦',
-	overlays: '層',
-	menus: '献立',
-	surfaces: '面',
-	global: '全',
-	theming: '彩',
-	install: '導入'
+	buttons: 'B',
+	forms: 'F',
+	overlays: 'O',
+	menus: 'M',
+	surfaces: 'S',
+	global: 'G',
+	theming: 'T',
+	install: 'I'
 }
 
 export function CategoryScreens() {
@@ -132,8 +139,8 @@ export function CategoryScreens() {
 }
 
 /**
- * One eyecatch card per category: the live component on the stage, its name
- * in the corner, and the reference beside it. Every other card is mirrored.
+ * One screen per category: the live component, its name and its props.
+ * Every other screen is mirrored.
  */
 function CategoryScreen({ id, title, items, flip }: Category & { flip: boolean }) {
 	const [sel, setSel] = useState(0)
@@ -208,7 +215,7 @@ function CategoryScreen({ id, title, items, flip }: Category & { flip: boolean }
 	)
 }
 
-/* ───────── Demos ───────── */
+/* Demos */
 
 function ButtonDemo() {
 	const [forced, setForced] = useState(false)
@@ -235,12 +242,15 @@ function ButtonDemo() {
 				<Button disabled>Unavailable</Button>
 			</div>
 			<div className="row">
-				<Button forceLoading={forced}>{forced ? 'Loading' : 'Idle'}</Button>
-				<label className="switch">
-					<input type="checkbox" checked={forced} onChange={(e) => setForced(e.target.checked)} />
-					<span aria-hidden="true" />
-					<code>forceLoading</code>
-				</label>
+				<Button size="small">Small</Button>
+				<Button variant="ghost">Ghost</Button>
+				<Button size="large">Large</Button>
+			</div>
+			<div className="row">
+				<Button loading={forced}>{forced ? 'Loading' : 'Idle'}</Button>
+				<Switch className="switch" checked={forced} onChange={(e) => setForced(e.target.checked)}>
+					<code>loading</code>
+				</Switch>
 			</div>
 		</div>
 	)
@@ -250,7 +260,7 @@ function IconButtonDemo() {
 	const [liked, setLiked] = useState(false)
 	return (
 		<div className="toolbar">
-			<Tooltip text={liked ? 'Unfavourite' : 'Favourite'} above>
+			<Tooltip content={liked ? 'Unfavourite' : 'Favourite'} placement="top">
 				<IconButton
 					aria-label="Favourite"
 					aria-pressed={liked}
@@ -263,12 +273,12 @@ function IconButtonDemo() {
 					<Ico name="heart" />
 				</IconButton>
 			</Tooltip>
-			<Tooltip text="Copy link" above>
+			<Tooltip content="Copy link" placement="top">
 				<IconButton aria-label="Copy link" onClick={() => copy(location.href, 'Link copied')}>
 					<Ico name="share" />
 				</IconButton>
 			</Tooltip>
-			<Tooltip text="Download" above>
+			<Tooltip content="Download" placement="top">
 				<IconButton
 					aria-label="Download"
 					onClick={async () => {
@@ -280,7 +290,7 @@ function IconButtonDemo() {
 				</IconButton>
 			</Tooltip>
 			<span className="toolbar-gap" />
-			<Tooltip text="Delete" above>
+			<Tooltip content="Delete" placement="top">
 				<IconButton
 					aria-label="Delete"
 					danger
@@ -309,26 +319,26 @@ function IconDemo() {
 	)
 }
 
-/** All four directions pinned open at once, with forceShow on a switch */
+/** All four sides pinned open at once, with `open` on a switch */
 function TooltipDemo() {
 	const [pinned, setPinned] = useState(true)
+	// Unpinned, they go back to showing on hover and focus
+	const open = pinned || undefined
 	return (
 		<div className="tips">
-			<Tooltip text="above" above forceShow={pinned}>
+			<Tooltip content="top" placement="top" open={open}>
 				<Button className="t-n">Up</Button>
 			</Tooltip>
-			<Tooltip text="left" left forceShow={pinned}>
+			<Tooltip content="left" placement="left" open={open}>
 				<Button className="t-w">Left</Button>
 			</Tooltip>
-			<label className="switch t-c">
-				<input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} />
-				<span aria-hidden="true" />
-				<code>forceShow</code>
-			</label>
-			<Tooltip text="right" right forceShow={pinned}>
+			<Switch className="switch t-c" checked={pinned} onChange={(e) => setPinned(e.target.checked)}>
+				<code>open</code>
+			</Switch>
+			<Tooltip content="right" placement="right" open={open}>
 				<Button className="t-e">Right</Button>
 			</Tooltip>
-			<Tooltip text="below (default)" forceShow={pinned}>
+			<Tooltip content="bottom (default)" open={open}>
 				<Button className="t-s">Down</Button>
 			</Tooltip>
 		</div>
@@ -373,7 +383,7 @@ function PopoverDemo() {
 
 	return (
 		<div className="field" ref={fieldRef}>
-			{/* Crosshairs and a readout follow the chip across the ruled chart */}
+			{/* Crosshairs and coordinates follow the chip */}
 			<i className="cross cross-x" style={{ left: `${pos.x}%` }} aria-hidden="true" />
 			<i className="cross cross-y" style={{ top: `${pos.y}%` }} aria-hidden="true" />
 			<span className="readout" aria-hidden="true">
@@ -403,15 +413,8 @@ function PopoverDemo() {
 				</Popover>
 			</div>
 			<div className="field-dirs">
-				{(['above', 'below', 'left', 'right'] as const).map((d) => (
-					<Popover
-						key={d}
-						above={d === 'above'}
-						below={d === 'below'}
-						left={d === 'left'}
-						right={d === 'right'}
-						content={<Box className="pop-card pop-small">{d}</Box>}
-					>
+				{(['top', 'bottom', 'left', 'right'] as const).map((d) => (
+					<Popover key={d} placement={d} content={<Box className="pop-card pop-small">{d}</Box>}>
 						<Button>{d}</Button>
 					</Popover>
 				))}
@@ -429,20 +432,24 @@ function DropdownDemo() {
 		<div className="row">
 			<Dropdown
 				items={[
-					{ key: 'png', label: 'Export as PNG', onPick: exportAs('png') },
-					{ key: 'svg', label: 'Export as SVG', onPick: exportAs('svg') },
-					{ key: 'pdf', label: 'Export as PDF', onPick: exportAs('pdf') },
-					{ key: 'link', label: 'Copy link', onPick: () => copy(location.href, 'Link copied') }
+					{ key: 'png', label: 'Export as PNG', onSelect: exportAs('png') },
+					{ key: 'svg', label: 'Export as SVG', onSelect: exportAs('svg') },
+					{ key: 'pdf', label: 'Export as PDF', onSelect: exportAs('pdf') },
+					{ key: 'link', label: 'Copy link', onSelect: () => copy(location.href, 'Link copied') }
 				]}
 			>
 				<Button className="w-wide">Export</Button>
 			</Dropdown>
 			<Dropdown
-				above
+				placement="top"
 				items={[
-					{ key: 'd', label: 'Duplicate', onPick: () => toast('Duplicated') },
-					{ key: 'r', label: 'Rename', onPick: () => toast('Renamed', 'info') },
-					{ key: 'a', label: 'Archive', onPick: () => toast('Archived', 'warning') }
+					{ key: 'd', label: 'Duplicate', onSelect: () => toast('Duplicated') },
+					{ key: 'r', label: 'Rename', onSelect: () => toast('Renamed', 'info') },
+					{
+						key: 'a',
+						label: 'Archive',
+						onSelect: () => toast('Archived', { type: 'warning', action: { label: 'Undo', onClick: () => toast('Restored') } })
+					}
 				]}
 			>
 				<Button className="w-wide">Opens above</Button>
@@ -464,15 +471,13 @@ function SelectDemo() {
 	return (
 		<div className="faces">
 			<Select
-				options={FACES.map((g, i) => ({
-					key: g.key,
-					name: g.name,
-					default: i === 0,
-					onPick: async () => {
-						await sleep(450)
-						setFace(g)
-					}
-				}))}
+				aria-label="Typeface"
+				options={FACES.map((f) => ({ value: f.key, label: f.name }))}
+				value={face.key}
+				onChange={async (key) => {
+					await sleep(450)
+					setFace(FACES.find((f) => f.key === key)!)
+				}}
 			/>
 			<Box className="face-card" key={face.key}>
 				<h4>{face.name}</h4>
@@ -496,10 +501,137 @@ function SelectDemo() {
 	)
 }
 
+function InputDemo() {
+	const [email, setEmail] = useState('ada@example')
+	const invalid = email !== '' && !/^\S+@\S+\.\S+$/.test(email)
+	return (
+		<Box className="form-card">
+			<label htmlFor="demo-name">Name</label>
+			<Input id="demo-name" placeholder="Ada Lovelace" autoComplete="off" />
+			<label htmlFor="demo-email">Email</label>
+			<Input
+				id="demo-email"
+				type="email"
+				value={email}
+				onChange={(e) => setEmail(e.target.value)}
+				aria-invalid={invalid}
+				aria-describedby="demo-email-error"
+				autoComplete="off"
+			/>
+			<p id="demo-email-error" className="form-hint">
+				{invalid ? 'Enter an address like name@example.com.' : ''}
+			</p>
+			<label htmlFor="demo-locked">Account</label>
+			<Input id="demo-locked" defaultValue="ada-1815" disabled />
+		</Box>
+	)
+}
+
+function TextareaDemo() {
+	const [text, setText] = useState('')
+	return (
+		<Box className="form-card">
+			<label htmlFor="demo-message">Message</label>
+			<Textarea
+				id="demo-message"
+				rows={4}
+				maxLength={200}
+				value={text}
+				onChange={(e) => setText(e.target.value)}
+				placeholder="What would you like to say?"
+				aria-describedby="demo-message-count"
+			/>
+			<p id="demo-message-count" className="form-hint">
+				{text.length} / 200
+			</p>
+		</Box>
+	)
+}
+
+const FOLDERS = ['Photos', 'Documents', 'Music']
+
+function CheckboxDemo() {
+	const [picked, setPicked] = useState<string[]>(['Photos'])
+	const all = picked.length === FOLDERS.length
+	return (
+		<Box className="form-card">
+			<fieldset>
+				<legend>Back up</legend>
+				<Checkbox
+					checked={all}
+					indeterminate={picked.length > 0 && !all}
+					onChange={(e) => setPicked(e.target.checked ? FOLDERS : [])}
+				>
+					Everything
+				</Checkbox>
+				<div className="form-nested">
+					{FOLDERS.map((f) => (
+						<Checkbox
+							key={f}
+							checked={picked.includes(f)}
+							onChange={(e) => setPicked(e.target.checked ? [...picked, f] : picked.filter((p) => p !== f))}
+						>
+							{f}
+						</Checkbox>
+					))}
+				</div>
+				<Checkbox disabled>System files</Checkbox>
+			</fieldset>
+		</Box>
+	)
+}
+
+function RadioDemo() {
+	return (
+		<Box className="form-card">
+			<fieldset>
+				<legend>Delivery</legend>
+				<Radio name="demo-delivery" value="standard" defaultChecked>
+					Standard, 3 to 5 days
+				</Radio>
+				<Radio name="demo-delivery" value="express">
+					Express, next day
+				</Radio>
+				<Radio name="demo-delivery" value="collect" disabled>
+					Collect in store
+				</Radio>
+			</fieldset>
+		</Box>
+	)
+}
+
+function SwitchDemo() {
+	return (
+		<Box className="form-card settings">
+			<Switch defaultChecked>Notifications</Switch>
+			<Switch>Auto-save</Switch>
+			<Switch defaultChecked disabled>
+				Sync
+			</Switch>
+		</Box>
+	)
+}
+
+function TabsDemo() {
+	return (
+		<Box className="form-card tabs-card">
+			<Tabs
+				aria-label="Product"
+				items={[
+					{ key: 'overview', label: 'Overview', content: <p>A cast-iron teapot that holds 0.8 litres.</p> },
+					{ key: 'specs', label: 'Specs', content: <p>Iron, enamel inside. 1.4 kg. Made in Morioka.</p> },
+					{ key: 'reviews', label: 'Reviews', content: <p>4.8 out of 5, from 212 reviews.</p> },
+					{ key: 'archive', label: 'Archive', content: null, disabled: true }
+				]}
+			/>
+		</Box>
+	)
+}
+
 function BoxDemo() {
 	return (
 		<Box icon="icons/bowl.svg" className="bowl-box">
-			<h4>Ricebowl</h4>
+			<h4>Paiger</h4>
 			<p>React component library</p>
 		</Box>
 	)
@@ -511,7 +643,7 @@ function PanelDemo() {
 			<Panel
 				title="Storage"
 				titleExtra={
-					<Tooltip text="Add item" left>
+					<Tooltip content="Add item" placement="left">
 						<IconButton aria-label="Add item" className="tiny" onClick={() => toast('Added a folder', 'success')}>
 							<Ico name="plus" size={14} />
 						</IconButton>
@@ -539,11 +671,11 @@ function LoadingDemo() {
 	return (
 		<div className="split">
 			<Box className="load-box">
-				<Loading />
+				<Loading center />
 			</Box>
 			<Box className="load-box">
 				<p>
-					Loading <Loading inline />
+					Loading <Loading />
 				</p>
 			</Box>
 		</div>
@@ -552,8 +684,7 @@ function LoadingDemo() {
 
 function KeysModal() {
 	return (
-		<ModalBox className="modal">
-			<h2>Keyboard</h2>
+		<ModalBox className="modal" title="Keyboard">
 			<table className="facts">
 				<tbody>
 					{[
@@ -570,7 +701,6 @@ function KeysModal() {
 			</table>
 			<div className="row">
 				<Button onClick={openPreviousModal}>Back</Button>
-				<Button onClick={hideModal}>Close</Button>
 			</div>
 		</ModalBox>
 	)
@@ -578,14 +708,12 @@ function KeysModal() {
 
 function SettingsModal() {
 	return (
-		<ModalBox className="modal">
-			<h2>Settings</h2>
+		<ModalBox className="modal" title="Settings">
 			<p className="modal-copy">
 				Opening another modal from here replaces this one. <code>openPreviousModal()</code> brings it back.
 			</p>
 			<div className="row">
 				<Button onClick={() => setModal(<KeysModal />)}>Keyboard</Button>
-				<Button onClick={hideModal}>Close</Button>
 			</div>
 		</ModalBox>
 	)
@@ -594,11 +722,10 @@ function SettingsModal() {
 function RenameModal() {
 	const [name, setName] = useState('')
 	return (
-		<ModalBox className="modal">
-			<h2>Rename</h2>
+		<ModalBox className="modal" title="Rename">
 			<form className="rename-form" onSubmit={(e) => e.preventDefault()}>
 				<label htmlFor="rename-name">Name</label>
-				<input id="rename-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
+				<Input id="rename-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
 				<Button
 					type="submit"
 					disabled={!name.trim()}
@@ -618,7 +745,7 @@ function RenameModal() {
 function ModalDemo() {
 	return (
 		<div className="row">
-			<Button onClick={() => setModal(<SettingsModal />, () => toast('Closed with Escape or the backdrop'))}>Open modal</Button>
+			<Button onClick={() => setModal(<SettingsModal />, () => toast('Settings closed'))}>Open modal</Button>
 			<Button onClick={() => setModal(<RenameModal />)}>Open a form</Button>
 		</div>
 	)
@@ -631,9 +758,6 @@ const TYPES: { type: ToastType; text: string }[] = [
 	{ type: 'warning', text: 'Storage is almost full.' },
 	{ type: 'error', text: 'Connection lost.' }
 ]
-
-// The furthest setTimeout can go (about 24 days). Any later and it fires straight away.
-const NEVER = new Date(Date.now() + 2 ** 31 - 1)
 
 // Outside the component so the choice survives switching tabs
 let toastCorner = 'right bottom'
@@ -673,32 +797,32 @@ function ToastDemo() {
 							))
 						)}
 					</div>
-					<label className="switch">
-						<input
-							type="checkbox"
-							checked={visible}
-							onChange={(e) => {
-								setVisible((toastsVisible = e.target.checked))
-								setToastVisibility(e.target.checked)
-							}}
-						/>
-						<span aria-hidden="true" />
+					<Switch
+						className="switch"
+						checked={visible}
+						onChange={(e) => {
+							setVisible((toastsVisible = e.target.checked))
+							setToastVisibility(e.target.checked)
+						}}
+					>
 						Visible
-					</label>
+					</Switch>
 				</div>
 			</div>
 			<div className="toast-gallery" aria-hidden="true">
 				{TYPES.slice(1).map((t) => (
-					<ToastBox key={t.type} id={t.type} text={t.text} type={t.type} closeAt={NEVER} closing={false} height={0} />
+					<ToastBox key={t.type} type={t.type}>
+						{t.text}
+					</ToastBox>
 				))}
 			</div>
 		</div>
 	)
 }
 
-/* ───────── Screens ───────── */
+/* Screens */
 
-export const CATEGORIES: Category[] = [
+const CATEGORIES: Category[] = [
 	{
 		id: 'buttons',
 		title: 'Buttons',
@@ -707,13 +831,14 @@ export const CATEGORIES: Category[] = [
 			key: 'button',
 			name: 'Button',
 			kind: 'Component',
-			desc: 'Pass an async onClick and the button shows a scanning border until it resolves. Clicks during loading are ignored.',
+			desc: 'Return a promise from onClick and a light sweeps the border until it settles. Clicks during loading are ignored, and it only submits a form with type="submit".',
 			traits: ['Async onClick', 'Sets aria-busy while loading', 'Keeps focus while loading', 'Forwards ref'],
 			props: [
-				['onClick', '() => Promise | void'],
+				['onClick', '(event) => Promise | void'],
+				['loading', 'boolean'],
 				['danger', 'boolean'],
-				['disabled', 'boolean'],
-				['forceLoading', 'boolean']
+				['size', "'small' | 'medium' | 'large'"],
+				['variant', "'solid' | 'ghost'"]
 			],
 			code: `<Button onClick={async () => {
   await save(draft)
@@ -721,10 +846,12 @@ export const CATEGORIES: Category[] = [
   Save
 </Button>`,
 			notes: [
-				{ at: '.row:first-child .rb-button', i: 0, label: 'onClick: async', side: 'top' },
-				{ at: '.row:first-child .rb-button', i: 1, label: 'danger', side: 'top' },
-				{ at: '.row:first-child .rb-button', i: 2, label: 'disabled', side: 'top' },
-				{ at: '.row:last-child .rb-button', label: 'forceLoading', side: 'left' }
+				{ at: '.row:first-child .pg-button', i: 0, label: 'onClick: async', side: 'top' },
+				{ at: '.row:first-child .pg-button', i: 1, label: 'danger', side: 'top' },
+				{ at: '.row:first-child .pg-button', i: 2, label: 'disabled', side: 'top' },
+				{ at: '.row:nth-child(2) .pg-button', i: 0, label: 'size="small"', side: 'left' },
+				{ at: '.row:nth-child(2) .pg-button', i: 2, label: 'size="large"', side: 'right' },
+				{ at: '.row:last-child .pg-button', label: 'loading', side: 'left' }
 			],
 			Demo: ButtonDemo
 		},
@@ -736,16 +863,16 @@ export const CATEGORIES: Category[] = [
 			traits: ['Async onClick', 'Pairs with Tooltip for a label'],
 			props: [
 				['children', '<Icon />'],
-				['…', 'all Button props']
+				['…', 'Button props except size']
 			],
 			code: `<IconButton aria-label="Favourite" onClick={save}>
   <Icon src="/heart.svg" />
 </IconButton>`,
 			notes: [
-				{ at: '.rb-icon-button', i: 0, label: 'aria-pressed', side: 'top' },
-				{ at: '.rb-icon-button', i: 1, label: 'children: <Icon />', side: 'bottom' },
-				{ at: '.rb-icon-button', i: 2, label: 'onClick: async', side: 'top' },
-				{ at: '.rb-icon-button', i: 3, label: 'danger', side: 'bottom' }
+				{ at: '.pg-icon-button', i: 0, label: 'aria-pressed', side: 'top' },
+				{ at: '.pg-icon-button', i: 1, label: 'children: <Icon />', side: 'bottom' },
+				{ at: '.pg-icon-button', i: 2, label: 'onClick: async', side: 'top' },
+				{ at: '.pg-icon-button', i: 3, label: 'danger', side: 'bottom' }
 			],
 			Demo: IconButtonDemo
 		},
@@ -758,14 +885,131 @@ export const CATEGORIES: Category[] = [
 			props: [
 				['src', 'string'],
 				['width', 'number'],
-				['height', 'number']
+				['height', 'number'],
+				['tint', 'boolean']
 			],
-			code: `<Icon src="/layers.svg" width={24} />`,
+			code: `<Icon src="/layers.svg" width={24} tint />`,
 			notes: [
-				{ at: '.rb-icon', i: 0, label: 'width={16}', side: 'top' },
-				{ at: '.rb-icon', i: 3, label: 'width={48}', side: 'top' }
+				{ at: '.pg-icon', i: 0, label: 'width={16}', side: 'top' },
+				{ at: '.pg-icon', i: 3, label: 'width={48}', side: 'top' }
 			],
 			Demo: IconDemo
+		}
+		]
+	},
+	{
+		id: 'forms',
+		title: 'Forms',
+		items: [
+		{
+			key: 'input',
+			name: 'Input',
+			kind: 'Component',
+			desc: 'A single-line text field that takes every attribute a native input does. Mark it invalid with aria-invalid, and point aria-describedby at the message that says why.',
+			traits: ['Native input', 'aria-invalid styling', 'Forwards ref'],
+			props: [
+				['type', 'string'],
+				['aria-invalid', 'boolean'],
+				['aria-describedby', 'string'],
+				['…', 'every <input> attribute']
+			],
+			code: `<label htmlFor="email">Email</label>
+<Input
+  id="email"
+  type="email"
+  aria-invalid={!valid}
+  aria-describedby="email-error"
+/>`,
+			notes: [
+				{ at: '.pg-input', i: 1, label: 'aria-invalid', side: 'right' },
+				{ at: '.pg-input', i: 2, label: 'disabled', side: 'right' }
+			],
+			Demo: InputDemo
+		},
+		{
+			key: 'textarea',
+			name: 'Textarea',
+			kind: 'Component',
+			desc: 'A multi-line text field that resizes vertically. Everything else is the native textarea.',
+			traits: ['Native textarea', 'Resizes vertically', 'Forwards ref'],
+			props: [
+				['rows', 'number'],
+				['maxLength', 'number'],
+				['…', 'every <textarea> attribute']
+			],
+			code: `<Textarea rows={4} maxLength={200} />`,
+			notes: [{ at: '.pg-textarea', label: 'rows={4}', side: 'right' }],
+			Demo: TextareaDemo
+		},
+		{
+			key: 'checkbox',
+			name: 'Checkbox',
+			kind: 'Component',
+			desc: 'A native checkbox, restyled. Its children are the label, and indeterminate shows the mixed state of a box that stands for several others.',
+			traits: ['Native input', 'Indeterminate', 'Label from children', 'Forwards ref'],
+			props: [
+				['checked · defaultChecked', 'boolean'],
+				['indeterminate', 'boolean'],
+				['onChange', '(event) => void'],
+				['children', 'ReactNode']
+			],
+			code: `<Checkbox
+  checked={all}
+  indeterminate={some}
+  onChange={(e) => setAll(e.target.checked)}
+>
+  Everything
+</Checkbox>`,
+			notes: [
+				{ at: '.pg-checkbox-input', i: 0, label: 'indeterminate', side: 'left' },
+				{ at: '.pg-checkbox-input', i: 4, label: 'disabled', side: 'left' }
+			],
+			Demo: CheckboxDemo
+		},
+		{
+			key: 'radio',
+			name: 'Radio',
+			kind: 'Component',
+			desc: 'A native radio button, restyled. Radios that share a name are one group, and arrow keys move between them. A fieldset and legend name the group.',
+			traits: ['Native input', 'Arrow keys within a group', 'Forwards ref'],
+			props: [
+				['name', 'string'],
+				['value', 'string'],
+				['checked · defaultChecked', 'boolean'],
+				['children', 'ReactNode']
+			],
+			code: `<fieldset>
+  <legend>Delivery</legend>
+  <Radio name="delivery" value="standard" defaultChecked>
+    Standard
+  </Radio>
+  <Radio name="delivery" value="express">Express</Radio>
+</fieldset>`,
+			notes: [
+				{ at: '.pg-radio-input', i: 0, label: 'name="demo-delivery"', side: 'left' },
+				{ at: '.pg-radio-input', i: 2, label: 'disabled', side: 'left' }
+			],
+			Demo: RadioDemo
+		},
+		{
+			key: 'switch',
+			name: 'Switch',
+			kind: 'Component',
+			desc: 'An on and off control that screen readers announce as a switch. Use it for settings that apply straight away, and Checkbox in forms that are submitted.',
+			traits: ['role="switch"', 'Native input', 'Forwards ref'],
+			props: [
+				['checked · defaultChecked', 'boolean'],
+				['onChange', '(event) => void'],
+				['children', 'ReactNode']
+			],
+			code: `<Switch checked={on} onChange={(e) => setOn(e.target.checked)}>
+  Notifications
+</Switch>`,
+			notes: [
+				{ at: '.pg-switch-input', i: 0, label: 'checked', side: 'right' },
+				{ at: '.pg-switch-input', i: 2, label: 'disabled', side: 'right' }
+			],
+			Demo: SwitchDemo
 		}
 		]
 	},
@@ -777,15 +1021,14 @@ export const CATEGORIES: Category[] = [
 			key: 'tooltip',
 			name: 'Tooltip',
 			kind: 'Component',
-			desc: 'Unfolds from its trigger, below by default or in any of the other three directions. Hides while the page scrolls.',
-			traits: ['Four directions', 'Rendered in a portal', 'Hides on scroll', 'Sets aria-describedby'],
+			desc: 'Unfolds from its trigger on hover or keyboard focus, below by default or on any other side. Hides while the page scrolls.',
+			traits: ['Four sides', 'Shows on keyboard focus', 'Wraps long content', 'Sets aria-describedby'],
 			props: [
-				['text', 'string'],
-				['above · left · right', 'boolean'],
-				['forceShow', 'boolean'],
-				['forceHide', 'boolean']
+				['content', 'ReactNode'],
+				['placement', "'top' | 'bottom' | 'left' | 'right'"],
+				['open', 'boolean']
 			],
-			code: `<Tooltip text="Copy link" right>
+			code: `<Tooltip content="Copy link" placement="right">
   <Button>Hover me</Button>
 </Tooltip>`,
 			Demo: TooltipDemo
@@ -795,13 +1038,14 @@ export const CATEGORIES: Category[] = [
 			name: 'Popover',
 			kind: 'Component',
 			desc: 'Measures itself before opening, then opens on the side with the most room. Drag the chip toward an edge and click it.',
-			traits: ['Smart positioning', 'Uses the Popover API', 'Follows its trigger on scroll and resize', 'Closes on outside click'],
+			traits: ['Smart positioning', 'Uses the Popover API', 'Follows its trigger', 'Escape and outside click close', 'Moves focus in and back'],
 			props: [
 				['content', 'node | (close) => node'],
-				['above · below · left · right', 'boolean'],
-				['smartPositions', 'PopoverPosition[]'],
+				['open · defaultOpen', 'boolean'],
+				['placement', 'Placement'],
+				['autoPlacements', 'Placement[]'],
+				['closeOnClickOutside', 'boolean'],
 				['matchTriggerWidth', 'boolean'],
-				['defaultOpen', 'boolean'],
 				['onOpenChange', '(open) => void']
 			],
 			code: `<Popover content={(close) => (
@@ -821,23 +1065,23 @@ export const CATEGORIES: Category[] = [
 			key: 'dropdown',
 			name: 'Dropdown',
 			kind: 'Component',
-			desc: 'A menu as wide as its trigger. Async items show a loading state, and the menu closes once they finish.',
-			traits: ['Async items', 'Arrow keys and Escape', 'Matches trigger width'],
+			desc: 'A menu as wide as its trigger. An async item sweeps its border while it runs, and the menu closes once it finishes.',
+			traits: ['Async items', 'Arrows, Home, End, type to jump', 'menu role', 'Matches trigger width'],
 			props: [
-				['items', '{ key, label, onPick }[]'],
-				['above', 'boolean'],
-				['smartPositions', 'PopoverPosition[]'],
+				['items', '{ key, label, onSelect }[]'],
+				['placement', 'Placement'],
+				['autoPlacements', 'Placement[]'],
 				['onOpenChange', '(open) => void']
 			],
 			code: `<Dropdown items={[
   { key: 'pdf', label: 'Export as PDF',
-    onPick: async () => await render() },
+    onSelect: async () => await render() },
 ]}>
   <Button>Export</Button>
 </Dropdown>`,
 			notes: [
-				{ at: '.rb-button', i: 0, label: 'items', side: 'top' },
-				{ at: '.rb-button', i: 1, label: 'above', side: 'bottom' }
+				{ at: '.pg-button', i: 0, label: 'items', side: 'top' },
+				{ at: '.pg-button', i: 1, label: 'placement="top"', side: 'bottom' }
 			],
 			Demo: DropdownDemo
 		},
@@ -845,21 +1089,24 @@ export const CATEGORIES: Category[] = [
 			key: 'select',
 			name: 'Select',
 			kind: 'Component',
-			desc: 'A combobox on top of Dropdown. The shown choice only changes after an async onPick resolves.',
-			traits: ['Async onPick', 'Opens with Enter or Space', 'combobox role'],
+			desc: 'Pick one value from a list. Controlled or not, and an async onChange keeps the list open until it settles.',
+			traits: ['Controlled or uncontrolled', 'Async onChange', 'Submits with forms via name', 'listbox role'],
 			props: [
-				['options', '{ key, name, onPick?, default? }[]'],
-				['above', 'boolean'],
-				['smartPositions', 'PopoverPosition[]']
+				['options', '{ value, label }[]'],
+				['value · defaultValue', 'string'],
+				['onChange', '(value) => Promise | void'],
+				['name', 'string'],
+				['disabled', 'boolean'],
+				['placement', 'Placement']
 			],
-			code: `<Select options={fonts.map((f) => ({
-  key: f.key,
-  name: f.name,
-  onPick: async () => setFont(await load(f.key)),
-}))} />`,
+			code: `<Select
+  options={fonts.map((f) => ({ value: f.key, label: f.name }))}
+  value={font}
+  onChange={async (key) => setFont(await load(key))}
+/>`,
 			notes: [
-				{ at: '.rb-select', label: 'options', side: 'left' },
-				{ at: '.face-card', label: 'onPick', side: 'right' }
+				{ at: '.pg-select', label: 'options', side: 'left' },
+				{ at: '.face-card', label: 'onChange', side: 'right' }
 			],
 			Demo: SelectDemo
 		}
@@ -881,10 +1128,10 @@ export const CATEGORIES: Category[] = [
 				['imageComponent', 'ComponentType']
 			],
 			code: `<Box icon="/bowl.svg">
-  <h4>Ricebowl</h4>
+  <h4>Paiger</h4>
 </Box>`,
 			notes: [
-				{ at: '.rb-box-icon', label: 'icon', side: 'right' },
+				{ at: '.pg-box-icon', label: 'icon', side: 'right' },
 				{ at: 'h4', label: 'children', side: 'left' }
 			],
 			Demo: BoxDemo
@@ -894,40 +1141,67 @@ export const CATEGORIES: Category[] = [
 			name: 'Panel',
 			kind: 'Component',
 			desc: 'A Box with a title row above it. The title row has room on the right for actions.',
-			traits: ['Title row', 'Title actions', 'Accepts Box props'],
+			traits: ['Title row', 'Title actions', 'Forwards ref'],
 			props: [
-				['title', 'string'],
-				['titleExtra', 'ReactNode']
+				['title', 'ReactNode'],
+				['titleExtra', 'ReactNode'],
+				['className', 'string']
 			],
 			code: `<Panel title="Storage" titleExtra={<IconButton>…</IconButton>}>
   …
 </Panel>`,
 			notes: [
-				{ at: '.rb-panel-title', label: 'title', side: 'left' },
-				{ at: '.rb-panel-title .rb-icon-button', label: 'titleExtra', side: 'right' },
+				{ at: '.pg-panel-title', label: 'title', side: 'left' },
+				{ at: '.pg-panel-title .pg-icon-button', label: 'titleExtra', side: 'right' },
 				{ at: '.storage', label: 'children', side: 'left' }
 			],
 			Demo: PanelDemo
 		},
 		{
+			key: 'tabs',
+			name: 'Tabs',
+			kind: 'Component',
+			desc: 'Switches between panels of content. Arrow keys move between tabs and select as they go, and only the selected panel is rendered.',
+			traits: ['Arrows, Home, End', 'tablist role', 'Controlled or uncontrolled', 'Disabled tabs'],
+			props: [
+				['items', '{ key, label, content, disabled? }[]'],
+				['value · defaultValue', 'string'],
+				['onChange', '(key) => void'],
+				['aria-label', 'string']
+			],
+			code: `<Tabs
+  aria-label="Product"
+  items={[
+    { key: 'overview', label: 'Overview', content: <Overview /> },
+    { key: 'specs', label: 'Specs', content: <Specs /> },
+  ]}
+/>`,
+			notes: [
+				{ at: '.pg-tabs-list', label: 'items', side: 'top' },
+				{ at: '.pg-tab', i: 3, label: 'disabled', side: 'right' },
+				{ at: '.pg-tabs-panel', label: 'content', side: 'left' }
+			],
+			Demo: TabsDemo
+		},
+		{
 			key: 'loading',
 			name: 'Loading',
 			kind: 'Component',
-			desc: 'Three pulsing dots. Centred in the nearest positioned parent by default, or inline with text.',
-			traits: ['Centred or inline', 'role="status"'],
+			desc: 'Three dots in a travelling wave. Sits inline with text, or centred in the nearest positioned parent.',
+			traits: ['Inline or centred', 'Size, gap and speed tokens', 'role="status"'],
 			props: [
-				['inline', 'boolean'],
+				['center', 'boolean'],
 				['className', 'string'],
 				['style', 'CSSProperties']
 			],
 			code: `<Box style={{ height: 120 }}>
-  <Loading />
+  <Loading center />
 </Box>
 
-<p>Loading <Loading inline /></p>`,
+<p>Loading <Loading /></p>`,
 			notes: [
-				{ at: '.rb-loading', i: 0, label: '<Loading />', side: 'top' },
-				{ at: '.rb-loading', i: 1, label: 'inline', side: 'top' }
+				{ at: '.pg-loading', i: 0, label: 'center', side: 'top' },
+				{ at: '.pg-loading', i: 1, label: '<Loading />', side: 'top' }
 			],
 			Demo: LoadingDemo
 		}
@@ -941,23 +1215,22 @@ export const CATEGORIES: Category[] = [
 			key: 'modal',
 			name: 'Modal',
 			kind: 'Function',
-			desc: 'One modal at a time. Opening a second one swaps it in, and openPreviousModal() goes back.',
-			traits: ['Traps focus', 'Escape and backdrop close', 'Returns focus on close', 'Remembers the previous modal'],
+			desc: 'One modal at a time, rendered inside your app so it can use your context. Opening another swaps it in, and openPreviousModal() goes back a step at a time.',
+			traits: ['Traps focus', 'Locks page scroll', 'Escape, backdrop and × close', 'Returns focus on close', 'Full back history'],
 			props: [
 				['setModal', '(node, onClose?) => void'],
 				['hideModal', '() => void'],
 				['openPreviousModal', '() => void'],
-				['<ModalBox>', 'icon · image · className']
+				['isModalOpen', '() => boolean'],
+				['<ModalBox>', 'title · closeButton · icon · image']
 			],
 			code: `setModal(
-  <ModalBox>
-    <h2>Settings</h2>
-  </ModalBox>,
+  <ModalBox title="Settings">…</ModalBox>,
   () => toast('Closed')
 )`,
 			notes: [
-				{ at: '.rb-button', i: 0, label: 'setModal(node, onClose)', side: 'top' },
-				{ at: '.rb-button', i: 1, label: 'setModal(node)', side: 'bottom' }
+				{ at: '.pg-button', i: 0, label: 'setModal(node, onClose)', side: 'top' },
+				{ at: '.pg-button', i: 1, label: 'setModal(node)', side: 'bottom' }
 			],
 			Demo: ModalDemo
 		},
@@ -965,18 +1238,19 @@ export const CATEGORIES: Category[] = [
 			key: 'toast',
 			name: 'Toast',
 			kind: 'Function',
-			desc: 'Toasts stack in a corner of your choice, pause while hovered and fade out after a few seconds.',
-			traits: ['Stacks', 'Pauses on hover', 'Any corner', 'Five types'],
+			desc: 'Toasts stack in a corner of your choice, pause while hovered and fade out after a few seconds. Each can carry an action, and has a × to dismiss it.',
+			traits: ['Stacks', 'Pauses on hover', 'Actions', 'Any corner', 'Five types'],
 			props: [
-				['toast', '(text, type?) => void'],
+				['toast', '(node, type | options?) => id'],
+				['options', '{ type, duration, action }'],
+				['dismissToast', '(id) => void'],
 				['setToastLocation', '(x, y) => void'],
-				['setToastVisibility', '(visible) => void'],
-				['<ToastBox>', 'the toast itself']
+				['<ToastBox>', 'a toast that stays put']
 			],
-			code: `import { toast } from 'ricebowl'
-
-toast('Upload complete.', 'success')
-setToastLocation('left', 'top')`,
+			code: `toast('Archived.', {
+  type: 'warning',
+  action: { label: 'Undo', onClick: restore },
+})`,
 			notes: [
 				{ at: '.toast-controls .row', i: 0, label: 'toast(text, type)', side: 'top' },
 				{ at: '.corners', label: 'setToastLocation', side: 'bottom' },

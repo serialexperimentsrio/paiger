@@ -1,15 +1,14 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 
 /**
- * A callout on the stage: a hairline from part of the live component to the
- * prop it demonstrates, like the labelled plates of an old field guide.
+ * A callout: a line from part of the live component to the prop it shows.
  * `at` is a selector inside the stage, `i` picks among its matches.
  */
 export type Note = { at: string; i?: number; label: string; side: 'top' | 'bottom' | 'left' | 'right' }
 
 type Mark = { key: string; label: string; side: Note['side']; points: [number, number][]; lx: number; ly: number }
 
-// Distance from the subject's edge to a label, and the step that moves a
+// Distance from the component's edge to a label, and the step that moves a
 // label clear of its neighbour on the same side
 const GAP = 46
 const STEP = 24

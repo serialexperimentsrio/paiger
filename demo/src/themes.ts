@@ -16,7 +16,6 @@ export type Theme = {
 export type PresetName = 'Light' | 'Dark'
 
 export const PRESETS: Record<PresetName, Theme> = {
-	// Parchment and ink
 	Light: {
 		main: '#f4ecdc',
 		accent: '#2b1f17',
@@ -48,26 +47,26 @@ const rgba = ({ hex, a }: Rgba) => {
 	return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${+a.toFixed(2)})`
 }
 
-/** The ricebowl custom properties for a theme, in the order of tokens.css */
-const rbVars = (t: Theme): [string, string][] => [
-	['--rb-color-main', t.main],
-	['--rb-color-accent', t.accent],
-	['--rb-color-bright', t.bright],
-	['--rb-color-dim', t.dim],
-	['--rb-color-danger', rgba(t.danger)],
-	['--rb-color-warning', rgba(t.warning)],
-	['--rb-color-success', rgba(t.success)],
-	['--rb-color-backdrop', rgba(t.backdrop)],
-	['--rb-border-width', `${t.border}px`],
-	['--rb-radius', `${t.radius}px`]
+/** The paiger custom properties for a theme, in the order of tokens.css */
+const pgVars = (t: Theme): [string, string][] => [
+	['--pg-color-main', t.main],
+	['--pg-color-accent', t.accent],
+	['--pg-color-bright', t.bright],
+	['--pg-color-dim', t.dim],
+	['--pg-color-danger', rgba(t.danger)],
+	['--pg-color-warning', rgba(t.warning)],
+	['--pg-color-success', rgba(t.success)],
+	['--pg-color-backdrop', rgba(t.backdrop)],
+	['--pg-border-width', `${t.border}px`],
+	['--pg-radius', `${t.radius}px`]
 ]
 
 export const toCss = (t: Theme) =>
-	`:root {\n${rbVars(t)
+	`:root {\n${pgVars(t)
 		.map(([k, v]) => `  ${k}: ${v};`)
 		.join('\n')}\n}`
 
-// The icons are white, so flip them on light backgrounds
+// Box's corner icon is a white image, so flip it on light backgrounds
 const isLight = (t: Theme) => {
 	const n = parseInt(t.main.slice(1), 16)
 	const lum = 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)
@@ -76,8 +75,6 @@ const isLight = (t: Theme) => {
 
 export const applyTheme = (t: Theme) => {
 	const root = document.documentElement.style
-	for (const [k, v] of rbVars(t)) root.setProperty(k, v)
+	for (const [k, v] of pgVars(t)) root.setProperty(k, v)
 	root.setProperty('--icon-filter', isLight(t) ? 'invert(1)' : 'none')
-	// Hovered buttons use the accent as fill, so their icons flip the other way
-	root.setProperty('--icon-filter-hover', isLight(t) ? 'none' : 'invert(1)')
 }

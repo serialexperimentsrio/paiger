@@ -1,13 +1,9 @@
-/* Ricebowl demo: each screen is a TV anime eyecatch card. A single-hue
-   airbrushed gradient, a thin ivory filigree frame, a Mincho wordmark,
-   names in serif, and the live components as the subject. */
-
 :root {
 	--serif: 'Cormorant Garamond', 'Times New Roman', serif;
 	--sc: 'Cormorant SC', var(--serif);
 	--mono: 'Courier Prime', 'Courier New', monospace;
-	--kanji: 'Shippori Mincho B1', 'Yu Mincho', serif;
-	--rb-font: var(--serif);
+	--blackletter: 'UnifrakturCook', 'Old English Text MT', serif;
+	--pg-font: var(--serif);
 
 	--ivory: #fbf4e6;
 	--ivory-2: rgb(251 244 230 / 0.72);
@@ -103,13 +99,11 @@ a {
 	top: 12px;
 }
 
-/* White line icons; inverted on light surfaces */
-.ico,
-.rb-box-icon {
+/* Box's corner icon is a plain image: white lines, inverted on light surfaces */
+.pg-box-icon {
 	filter: var(--icon-filter);
 }
 
-/* Film grain over everything */
 .grain-overlay {
 	position: fixed;
 	inset: 0;
@@ -133,7 +127,7 @@ body::after {
 	pointer-events: none;
 }
 
-/* ───────── Frame ───────── */
+/* Frame */
 
 .frame {
 	position: fixed;
@@ -214,33 +208,59 @@ body::after {
 	right: -0.7px;
 }
 
-/* ───────── Wordmark ───────── */
+/* Wordmark */
 
-.kanji {
-	font-family: var(--kanji);
-	font-weight: 800;
+.mark {
+	position: relative;
+	z-index: 0;
+	display: inline-block;
+	font-family: var(--blackletter);
+	font-weight: 700;
 	line-height: 1;
-	letter-spacing: 0.04em;
-	text-shadow:
-		0.05em 0.05em 0 rgb(30 8 4 / 0.32),
-		0 0.08em 0.3em rgb(0 0 0 / 0.3);
+	white-space: nowrap;
 }
 
-.latin {
-	font-family: var(--sc);
-	font-weight: 600;
-	text-transform: uppercase;
-	text-shadow: 0 1px 2px var(--shade);
+/* The shadow is a copy of the word under the frame, so the letters cast
+   it on the page but not on the line */
+.mark::before {
+	content: 'Paiger';
+	position: absolute;
+	z-index: -2;
+	left: 0;
+	top: 0;
+	color: transparent;
+	text-shadow:
+		0.03em 0.03em 0 rgb(30 8 4 / 0.35),
+		0 0.06em 0.3em rgb(0 0 0 / 0.3);
+}
+
+/* A frame behind the P: straight sides, and a top and bottom that each run
+   as one sideways S. The P's tail breaks out of the bottom. */
+.mark-p {
+	position: relative;
+	display: inline-block;
+}
+
+.mark-p svg {
+	position: absolute;
+	z-index: -1;
+	left: 0;
+	top: 0;
+	width: 1em;
+	height: 1em;
+	overflow: visible;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: max(1px, 0.018em);
 }
 
 .lockup {
 	position: fixed;
 	z-index: 60;
-	left: calc(var(--inset) + var(--corner) * 0.7);
-	top: calc(var(--inset) + 16px);
-	display: grid;
-	justify-items: center;
-	gap: 6px;
+	/* Past the end of the corner's scrollwork, level with the tabs */
+	left: calc(var(--inset) + var(--corner));
+	top: calc(var(--inset) + 17px);
+	color: inherit;
 	text-decoration: none;
 	transition:
 		opacity 0.4s var(--ease),
@@ -248,14 +268,8 @@ body::after {
 		visibility 0.4s;
 }
 
-.lockup .kanji {
-	font-size: 38px;
-}
-
-.lockup .latin {
-	font-size: 11px;
-	letter-spacing: 0.42em;
-	padding-left: 0.42em;
+.lockup .mark {
+	font-size: 28px;
 }
 
 .lockup[data-hidden] {
@@ -264,7 +278,7 @@ body::after {
 	transform: translateY(-6px);
 }
 
-/* ───────── Chapter list ───────── */
+/* Chapter list */
 
 .chapters {
 	position: fixed;
@@ -276,7 +290,7 @@ body::after {
 	gap: 18px;
 	max-width: calc(100vw - var(--inset) * 2 - var(--corner) * 1.6);
 	font-family: var(--sc);
-	font-size: 15px;
+	font-size: 20px;
 	font-weight: 600;
 	letter-spacing: 0.12em;
 	text-shadow: 0 1px 2px var(--shade);
@@ -347,7 +361,7 @@ kbd {
 	outline-offset: 2px;
 }
 
-/* ───────── Screens ───────── */
+/* Screens */
 
 .screen {
 	position: relative;
@@ -375,7 +389,6 @@ kbd {
 	position: fixed;
 	inset: 0;
 	z-index: -1;
-	/* Airbrushed: dark at the top right, fading light toward the bottom left */
 	background:
 		radial-gradient(90% 70% at 15% 105%, color-mix(in srgb, var(--b) 60%, white 10%), transparent 70%),
 		linear-gradient(200deg, var(--a) 0%, color-mix(in srgb, var(--a) 50%, var(--b)) 48%, var(--b) 100%);
@@ -392,6 +405,11 @@ kbd {
 .backdrop[data-screen='buttons'] {
 	--a: #6a250c;
 	--b: #d49a72;
+}
+
+.backdrop[data-screen='forms'] {
+	--a: #4a1a3a;
+	--b: #c58fad;
 }
 
 .backdrop[data-screen='overlays'] {
@@ -424,7 +442,7 @@ kbd {
 	--b: #9dcdee;
 }
 
-/* One card per scroll step where the cards fit; free scrolling elsewhere */
+/* One screen per scroll step where the screens fit; free scrolling elsewhere */
 @media (min-width: 1000px) and (min-height: 680px) {
 	:root {
 		scroll-snap-type: y mandatory;
@@ -434,11 +452,17 @@ kbd {
 		height: 100svh;
 		scroll-snap-align: start;
 	}
+
+	/* Fixed, so the tabs fade in place instead of scrolling in with the
+	   screen. Scoped to .screen to outrank the .tabs rule further down */
+	.screen .tabs {
+		position: fixed;
+		z-index: 60;
+	}
 }
 
-/* ───────── Title ───────── */
+/* Title */
 
-/* Title: the lockup centred on the card */
 .title {
 	display: grid;
 	place-content: center;
@@ -460,16 +484,10 @@ kbd {
 	font-weight: inherit;
 }
 
-.wordmark .kanji {
-	font-size: clamp(88px, 15vw, 168px);
-	letter-spacing: 0.08em;
-	padding-left: 0.08em;
-}
-
-.wordmark .latin {
-	font-size: 20px;
-	letter-spacing: 0.6em;
-	padding-left: 0.6em;
+.wordmark .mark {
+	font-size: clamp(84px, 13vw, 160px);
+	/* The frame's curves reach past the line above and below */
+	margin-block: 0.1em;
 }
 
 .meta {
@@ -541,7 +559,7 @@ kbd {
 	opacity: 1;
 }
 
-/* ───────── Component cards ───────── */
+/* Component screens */
 
 /* The empty first and last rows share the spare height, which centres the
    name and reference vertically in their column */
@@ -556,8 +574,8 @@ kbd {
 		'usage body'
 		'usage .';
 	gap: 0 64px;
-	/* Very wide screens: keep the composition together instead of letting the
-	   two columns drift to opposite edges */
+	/* Very wide screens: cap the width so the two columns don't end up at
+	   opposite edges */
 	padding-inline: max(80px, calc((100vw - 1480px) / 2));
 }
 
@@ -588,8 +606,8 @@ kbd {
 	justify-self: end;
 }
 
-/* Tall screens: the subject gets the whole height of its side, and the name,
-   reference and usage stack down the other side */
+/* Tall screens: the component takes one side at full height, and the name,
+   props and usage stack on the other */
 @media (min-width: 1000px) and (min-height: 880px) {
 	.card:not(.theming) {
 		grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
@@ -635,6 +653,11 @@ kbd {
 	grid-area: head;
 }
 
+/* Theme's token list starts right under the heading, so leave a gap */
+.theming .head {
+	margin-bottom: 20px;
+}
+
 .name {
 	font-size: 60px;
 	font-weight: 600;
@@ -656,10 +679,27 @@ kbd {
 }
 
 .tabs {
+	position: absolute;
+	z-index: 2;
+	left: 50%;
+	top: calc(var(--inset) + 14px);
 	display: flex;
 	flex-wrap: wrap;
+	justify-content: center;
 	align-items: center;
-	margin-top: 14px;
+	max-width: calc(100% - var(--inset) * 2 - var(--corner) * 1.6);
+	translate: -50% 0;
+	/* Fades in when its screen becomes active, and out when it leaves */
+	transition:
+		opacity 0.4s var(--ease),
+		transform 0.4s var(--ease),
+		visibility 0.4s;
+}
+
+.screen:not([data-active]) .tabs {
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(-6px);
 }
 
 .tab {
@@ -731,7 +771,7 @@ kbd {
 	margin: 0 10px 0 0;
 }
 
-/* Small caps label trailed by a fading rule */
+/* Small caps label followed by a rule that fades out at both ends */
 .label {
 	display: flex;
 	align-items: center;
@@ -747,7 +787,7 @@ kbd {
 	content: '';
 	flex: 1;
 	height: 1px;
-	background: linear-gradient(90deg, currentColor, transparent);
+	background: linear-gradient(90deg, transparent, currentColor 20%, currentColor 80%, transparent);
 	opacity: 0.6;
 }
 
@@ -795,19 +835,17 @@ kbd {
 	min-height: 0;
 }
 
-/* Outlined kanji set vertically behind the subject */
+/* Letter behind the component */
 .glyph {
 	position: absolute;
 	left: 50%;
 	top: 50%;
-	font-family: var(--kanji);
-	font-size: calc(min(64vh, 40vw) / var(--n));
-	font-weight: 800;
+	font-family: var(--serif);
+	font-size: min(64vh, 40vw);
+	font-weight: 500;
 	line-height: 1;
 	color: transparent;
 	-webkit-text-stroke: 1.5px rgb(251 244 230 / 0.2);
-	writing-mode: vertical-rl;
-	white-space: nowrap;
 	translate: -50% -50%;
 	pointer-events: none;
 	user-select: none;
@@ -830,7 +868,6 @@ kbd {
 	animation: fade-in 0.5s 0.1s var(--ease) both;
 }
 
-/* Code plate: a dark inset panel with a double rule */
 .plate {
 	padding: 10px 16px 14px;
 	background: rgb(18 8 4 / 0.42);
@@ -875,7 +912,7 @@ kbd {
 	opacity: 0.6;
 }
 
-/* ───────── Theme ───────── */
+/* Theme */
 
 .tokens .tok {
 	display: grid;
@@ -930,7 +967,6 @@ kbd {
 	text-align: center;
 }
 
-/* Slider: a hairline with a diamond thumb */
 .range {
 	width: 100%;
 	height: 18px;
@@ -980,13 +1016,15 @@ kbd {
 }
 
 .dim {
-	color: var(--rb-color-dim);
+	color: var(--pg-color-dim);
 }
 
-/* ───────── Install ───────── */
+/* Install */
 
 .steps {
 	display: grid;
+	/* Wide code scrolls instead of widening the steps */
+	grid-template-columns: minmax(0, 1fr);
 	gap: 26px;
 	width: min(100%, 560px);
 	margin: 0;
@@ -1037,108 +1075,122 @@ kbd {
 	opacity: 0.85;
 }
 
-/* ───────── Ricebowl components ─────────
-   Just the public rb-* classes. The library's CSS is in a layer, so these
-   win without !important. */
+/* Paiger components, through the public pg-* classes only. The library's
+   CSS is in a layer, so these win without !important. */
 
-/* Double rule, like the code plates: the border plus a fainter hairline
-   just outside it. Keyboard focus swaps the hairline for the focus ring. */
-.rb-button,
-.rb-select {
+/* A fainter second outline just outside the border. Keyboard focus
+   replaces it with the focus ring. */
+.pg-button,
+.pg-select {
 	font-size: 17px;
 	font-weight: 600;
 	letter-spacing: 0.02em;
 	transition:
 		background 0.15s,
 		color 0.15s;
-	outline: 1px solid color-mix(in srgb, var(--rb-color-accent) 45%, transparent);
+	outline: 1px solid color-mix(in srgb, var(--pg-color-accent) 45%, transparent);
 	outline-offset: 3px;
 }
 
-.rb-button {
+.pg-button:not(.pg-icon-button) {
 	padding: 8px 20px;
 }
 
-.rb-button:focus-visible,
-.rb-select:focus-visible {
-	outline: 2px solid var(--rb-color-accent);
+/* Icon buttons stay square, as the library draws them, at the height of the
+   text buttons beside them */
+.pg-icon-button {
+	padding: 12px;
+}
+
+.pg-button:focus-visible,
+.pg-select:focus-visible {
+	outline: 2px solid var(--pg-color-accent);
 	outline-offset: 3px;
 }
 
 /* Loading: the sweep along the top and bottom is normally the text colour,
    which here is the same ink as the border. Use the fill colour instead so it
    cuts through, and dash the outer hairline while it runs. */
-.rb-button[data-loading]::before,
-.rb-button[data-loading]::after {
-	height: calc(var(--rb-border-width) + 1px);
+.pg-button[data-loading]::before,
+.pg-button[data-loading]::after {
+	height: calc(var(--pg-border-width) + 1px);
 	opacity: 1;
-	background-image: linear-gradient(90deg, transparent 0 50%, var(--rb-color-main) 50% 100%);
+	background-image: linear-gradient(90deg, transparent 0 50%, var(--pg-color-main) 50% 100%);
 }
 
-.rb-button[data-loading] {
+.pg-button[data-loading] {
 	outline-style: dashed;
+}
+
+/* Ghost buttons have no fill, so they use the page's ivory text colour */
+.pg-button[data-variant='ghost'] {
+	color: var(--ivory);
+	outline-color: transparent;
+}
+
+/* Menu items sweep just inside their edges, so the ink line shows as is */
+.pg-dropdown-item[data-loading]::before,
+.pg-dropdown-item[data-loading]::after {
+	opacity: 0.8;
 }
 
 /* Hover inverts the colours. Only set background-color: the danger tint is a
    gradient on top, and replacing the whole background made it flash. */
-.rb-button:hover:not(:disabled):not([data-loading]),
-.rb-select:hover,
-.rb-select:focus-visible,
-.rb-select[aria-expanded='true'],
-.rb-dropdown-item:hover,
-.rb-dropdown-item:focus-visible {
-	color: var(--rb-color-main);
-	background-color: var(--rb-color-accent);
-}
-
-.rb-button:hover:not(:disabled) .ico {
-	filter: var(--icon-filter-hover);
+.pg-button:hover:not(:disabled):not([data-loading]),
+.pg-select:hover,
+.pg-select:focus-visible,
+.pg-select[aria-expanded='true'],
+.pg-dropdown-item:hover,
+.pg-dropdown-item:focus-visible {
+	color: var(--pg-color-main);
+	background-color: var(--pg-color-accent);
 }
 
 
-.rb-button:disabled {
+
+.pg-button:disabled {
 	opacity: 0.5;
 }
 
-.rb-dropdown-item {
+.pg-dropdown-item {
 	font-size: 17px;
 }
 
-.rb-tooltip {
+.pg-tooltip {
 	font-size: 15px;
 	font-weight: 600;
 }
 
-/* Every Box gets an inner hairline, a double rule like the frame */
-.rb-box {
-	color: var(--rb-color-bright);
+/* Second outline inside every Box */
+.pg-box {
+	color: var(--pg-color-bright);
 }
 
-.rb-box::after {
+.pg-box::after {
 	content: '';
 	position: absolute;
 	inset: 4px;
-	border: 1px solid color-mix(in srgb, var(--rb-color-accent) 40%, transparent);
-	border-radius: max(0px, calc(var(--rb-radius) - 4px));
+	border: 1px solid color-mix(in srgb, var(--pg-color-accent) 40%, transparent);
+	border-radius: max(0px, calc(var(--pg-radius) - 4px));
 	pointer-events: none;
 }
 
-.rb-toast {
+.pg-toast {
 	font-size: 16px;
 }
 
-.rb-modal-backdrop[data-active] {
+.pg-modal-backdrop[data-active] {
 	backdrop-filter: blur(2px) grayscale(0.4);
 }
 
-.rb-panel-title {
+.pg-panel-title {
 	font-family: var(--sc);
 	font-size: 14px;
 	font-weight: 700;
 	letter-spacing: 0.2em;
 }
 
-/* ───────── Demo bits ───────── */
+/* Demo bits */
 
 .row {
 	display: flex;
@@ -1161,7 +1213,6 @@ kbd {
 	width: min(100%, 520px);
 }
 
-/* Toggle: a hairline box with a diamond knob */
 .switch {
 	display: inline-flex;
 	align-items: center;
@@ -1180,54 +1231,93 @@ kbd {
 	letter-spacing: 0;
 }
 
-.switch input {
-	position: absolute;
-	opacity: 0;
-	pointer-events: none;
+/* These switches sit on the page, not a surface, so give the track an ivory
+   ring that reads whatever the theme's colours */
+.switch .pg-switch-input {
+	box-shadow: 0 0 0 1px rgb(251 244 230 / 0.6);
 }
 
-.switch span {
-	position: relative;
-	width: 38px;
-	height: 18px;
-	background: rgb(20 8 4 / 0.3);
-	border: 1px solid var(--ivory);
-	transition: background 0.2s;
+/* Forms */
+
+.form-card {
+	display: grid;
+	gap: 6px;
+	width: min(100%, 360px);
+	padding: 22px 24px;
+	font-size: 17px;
+	text-align: left;
 }
 
-.switch span::after {
-	content: '';
-	position: absolute;
-	top: 3.5px;
-	left: 4px;
-	width: 9px;
-	height: 9px;
-	background: var(--ivory);
-	transform: rotate(45deg);
-	transition: translate 0.3s var(--ease);
+.form-card > label:not([class]),
+.form-card legend {
+	font-family: var(--sc);
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	color: var(--pg-color-dim);
 }
 
-.switch input:checked + span {
-	background: rgb(251 244 230 / 0.28);
+.form-card > label:not([class], :first-child) {
+	margin-top: 8px;
 }
 
-.switch input:checked + span::after {
-	translate: 20px 0;
+.form-card .pg-input,
+.form-card .pg-textarea {
+	width: 100%;
 }
 
-.switch input:focus-visible + span {
-	outline: 1px solid var(--ivory);
-	outline-offset: 3px;
+.form-hint {
+	min-height: 1.4em;
+	font-size: 14px;
+	color: var(--pg-color-dim);
+}
+
+.form-card fieldset {
+	display: grid;
+	gap: 12px;
+	margin: 0;
+	padding: 0;
+	border: none;
+}
+
+.form-card legend {
+	margin-bottom: 12px;
+	padding: 0;
+}
+
+.form-nested {
+	display: grid;
+	gap: 12px;
+	padding-left: 28px;
+}
+
+/* Settings read label first, control at the end of the row */
+.settings {
+	gap: 16px;
+}
+
+.settings .pg-switch {
+	flex-direction: row-reverse;
+	justify-content: space-between;
+}
+
+.tabs-card {
+	width: min(100%, 420px);
+	padding-top: 10px;
+}
+
+.tabs-card .pg-tabs-panel p {
+	min-height: 3em;
 }
 
 .toolbar,
 .sizes,
 .corners,
 .surface-card {
-	color: var(--rb-color-bright);
-	background: var(--rb-color-main);
-	border: var(--rb-border-width) solid var(--rb-color-accent);
-	border-radius: var(--rb-radius);
+	color: var(--pg-color-bright);
+	background: var(--pg-color-main);
+	border: var(--pg-border-width) solid var(--pg-color-accent);
+	border-radius: var(--pg-radius);
 }
 
 .toolbar {
@@ -1241,11 +1331,11 @@ kbd {
 	align-self: stretch;
 	width: 1px;
 	margin: 0 4px;
-	background: var(--rb-color-accent);
+	background: var(--pg-color-accent);
 }
 
 .toolbar .is-on {
-	background-image: linear-gradient(var(--rb-color-danger), var(--rb-color-danger));
+	background-image: linear-gradient(var(--pg-color-danger), var(--pg-color-danger));
 }
 
 .sizes {
@@ -1267,8 +1357,7 @@ kbd {
 	font-size: 13px;
 }
 
-/* Popover's drag area, drawn as a ruled chart: a hairline box with
-   rulers along the top and left, crosshairs on the chip, and a readout */
+/* Popover's drag area */
 .field {
 	position: relative;
 	width: min(100%, 640px);
@@ -1308,8 +1397,7 @@ kbd {
 	opacity: 0.85;
 }
 
-/* Tooltip: four triggers in a cross, spaced so each pinned tooltip has
-   room to open outward, with the forceShow switch in the middle */
+/* Tooltip triggers, spaced so each pinned tooltip has room to open */
 .tips {
 	display: grid;
 	grid-template-areas:
@@ -1322,7 +1410,7 @@ kbd {
 	padding: 48px 120px;
 }
 
-.tips .rb-button {
+.tips .pg-button {
 	min-width: 96px;
 }
 
@@ -1342,7 +1430,7 @@ kbd {
 	grid-area: s;
 }
 
-/* Callouts: hairline leaders from the live component to its props */
+/* Callouts: lines from the component to its props */
 .notes {
 	position: absolute;
 	inset: 0;
@@ -1404,7 +1492,7 @@ kbd {
 		padding: 40px 0;
 	}
 
-	.tips .rb-button {
+	.tips .pg-button {
 		min-width: 0;
 	}
 
@@ -1479,7 +1567,7 @@ kbd {
 .bowl-box p,
 .modal-copy {
 	margin-top: 2px;
-	color: var(--rb-color-dim);
+	color: var(--pg-color-dim);
 }
 
 .face-card dl {
@@ -1488,7 +1576,7 @@ kbd {
 	gap: 12px;
 	margin: 16px 0 0;
 	padding-top: 12px;
-	border-top: 1px solid color-mix(in srgb, var(--rb-color-accent) 45%, transparent);
+	border-top: 1px solid color-mix(in srgb, var(--pg-color-accent) 45%, transparent);
 }
 
 .face-card dt,
@@ -1497,7 +1585,7 @@ kbd {
 	font-size: 13px;
 	font-weight: 700;
 	letter-spacing: 0.12em;
-	color: var(--rb-color-dim);
+	color: var(--pg-color-dim);
 }
 
 .face-card dd {
@@ -1515,7 +1603,7 @@ kbd {
 }
 
 /* Thin line art, so it can sit a little stronger than Box's default 0.2 */
-.bowl-box .rb-box-icon {
+.bowl-box .pg-box-icon {
 	width: 46%;
 	right: 6%;
 	top: 44%;
@@ -1537,7 +1625,7 @@ kbd {
 	display: flex;
 	justify-content: space-between;
 	padding: 10px 0;
-	border-bottom: 1px solid color-mix(in srgb, var(--rb-color-accent) 40%, transparent);
+	border-bottom: 1px solid color-mix(in srgb, var(--pg-color-accent) 40%, transparent);
 }
 
 .storage li:first-child {
@@ -1579,7 +1667,7 @@ kbd {
 }
 
 .modal-copy code {
-	color: var(--rb-color-bright);
+	color: var(--pg-color-bright);
 	font-size: 15px;
 }
 
@@ -1591,13 +1679,13 @@ kbd {
 .facts th,
 .facts td {
 	padding: 9px 0;
-	border-bottom: 1px solid color-mix(in srgb, var(--rb-color-accent) 40%, transparent);
+	border-bottom: 1px solid color-mix(in srgb, var(--pg-color-accent) 40%, transparent);
 	font-weight: 500;
 }
 
 .facts th {
 	text-align: left;
-	color: var(--rb-color-dim);
+	color: var(--pg-color-dim);
 }
 
 .facts td {
@@ -1612,14 +1700,13 @@ kbd {
 	text-align: left;
 }
 
-.rename-form input {
+.rename-form .pg-input {
 	width: 100%;
 	margin-bottom: 8px;
-	padding: 9px 12px;
-	color: var(--rb-color-bright);
-	background: color-mix(in srgb, var(--rb-color-main) 88%, var(--rb-color-accent));
-	border: var(--rb-border-width) solid var(--rb-color-accent);
-	border-radius: var(--rb-radius);
+}
+
+.rename-form .pg-button {
+	justify-self: center;
 }
 
 /* Toast */
@@ -1653,7 +1740,7 @@ kbd {
 	height: 18px;
 	padding: 0;
 	background: transparent;
-	border: 1px solid var(--rb-color-dim);
+	border: 1px solid var(--pg-color-dim);
 	cursor: pointer;
 	transition:
 		background 0.2s,
@@ -1661,12 +1748,12 @@ kbd {
 }
 
 .corners button:hover {
-	border-color: var(--rb-color-bright);
+	border-color: var(--pg-color-bright);
 }
 
 .corners button.on {
-	background: var(--rb-color-accent);
-	border-color: var(--rb-color-accent);
+	background: var(--pg-color-accent);
+	border-color: var(--pg-color-accent);
 }
 
 .toast-gallery {
@@ -1678,12 +1765,9 @@ kbd {
 	width: 250px;
 	margin: 4px 0;
 	padding: 12px 16px;
-	/* These are just for show, and hovering would start their timers.
-	   !important because the library sets pointer-events inline. */
-	pointer-events: none !important;
 }
 
-/* ───────── Motion ───────── */
+/* Motion */
 
 @keyframes ink-in {
 	from {
@@ -1715,8 +1799,9 @@ kbd {
 	}
 }
 
+/* Not the loading dots: the library already turns them into a fade */
 @media (prefers-reduced-motion: reduce) {
-	*,
+	*:not(.pg-loading-dot),
 	*::before,
 	*::after {
 		animation: none !important;
@@ -1724,7 +1809,7 @@ kbd {
 	}
 }
 
-/* ───────── Smaller screens ───────── */
+/* Smaller screens */
 
 @media (max-width: 1240px) {
 	.card {
@@ -1737,7 +1822,16 @@ kbd {
 	}
 }
 
-/* Short desktop screens: tighten the vertical rhythm so each card still fits */
+/* The chapter list matches the tabs at 20px from 1300px wide; below that
+   it steps down so more of it fits (it scrolls to the current chapter) */
+@media (max-width: 1299px) {
+	.chapters {
+		gap: 12px;
+		font-size: 16px;
+	}
+}
+
+/* Short desktop screens: tighten the vertical rhythm so each screen still fits */
 @media (min-width: 1000px) and (max-height: 820px) {
 	.screen {
 		padding-top: 100px;
@@ -1761,10 +1855,6 @@ kbd {
 
 	.name {
 		font-size: 52px;
-	}
-
-	.tabs {
-		margin-top: 8px;
 	}
 
 	.desc {
@@ -1829,6 +1919,16 @@ kbd {
 		min-height: 240px;
 	}
 
+	/* One column, so the code takes its full width on both sides */
+	.flip .usage {
+		justify-self: stretch;
+	}
+
+	.usage .plate {
+		width: auto;
+		min-width: 0;
+	}
+
 	/* Content scrolls under the fixed overlays here, so drop the lockup
 	   and give the chapter list a backing */
 	.lockup {
@@ -1863,6 +1963,15 @@ kbd {
 
 	.name {
 		font-size: 46px;
+	}
+
+	/* No room between the corners, so the tabs go under the name */
+	.tabs {
+		position: static;
+		justify-content: flex-start;
+		max-width: none;
+		margin-top: 16px;
+		translate: none;
 	}
 
 	.toasts,
