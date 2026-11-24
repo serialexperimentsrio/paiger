@@ -255,6 +255,6 @@ Minimum supported browsers: Chrome 114+, Safari 17+, Firefox 125+.
 
 ## License
 
-Copyright 2026 Rio
+Copyright 2026 Rio <engineer@disr.it>
 
 Licensed under the GNU Lesser General Public License v3.0 or later. See [LICENSE](LICENSE) for details.
